@@ -1,121 +1,270 @@
 import React from 'react';
-import useStore from '../store/useStore';
-import { parseProject, matchResources } from '../api/client';
-import ProjectInput from '../components/dashboard/ProjectInput';
-import BOMPanel from '../components/dashboard/BOMPanel';
-import SkillsPanel from '../components/dashboard/SkillsPanel';
-import HardwareMatches from '../components/dashboard/HardwareMatches';
-import MentorMatches from '../components/dashboard/MentorMatches';
-import { SkeletonCard } from '../components/ui/LoadingSpinner';
+import { Link, useLocation } from 'react-router-dom';
+import { DashboardProvider, useDashboardContext } from '../context/DashboardContext';
+import { LayoutDashboard, FolderKanban, Component, Settings, Sparkles, Cpu, Code2, Users, Search, ArrowRight, Loader2 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
-const UserDashboard: React.FC = () => {
-  const {
-    parseResult,
-    isParsingProject,
-    matchedHardware,
-    matchedMentors,
-    isMatchingResources,
-    setParseResult,
-    setIsParsingProject,
-    setMatchedHardware,
-    setMatchedMentors,
-    setIsMatchingResources,
-  } = useStore();
+// --- SIDEBAR COMPONENT ---
+const Sidebar = () => {
+  const location = useLocation();
 
-  const handleParseProject = async (description: string) => {
-    setIsParsingProject(true);
-    setParseResult(null);
-    setMatchedHardware([]);
-    setMatchedMentors([]);
+  const navItems = [
+    { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
+    { icon: FolderKanban, label: 'Projects', path: '/dashboard' },
+    { icon: Component, label: 'Registry', path: '/registry' },
+    { icon: Settings, label: 'Settings', path: '/settings' },
+  ];
 
-    try {
-      const { data } = await parseProject(description);
-      const result = data.data;
-      setParseResult(result);
-      setIsParsingProject(false);
+  return (
+    <aside className="hidden md:flex flex-col w-64 bg-slate-950 border-r border-slate-800/50 p-6 z-10 sticky top-[64px] h-[calc(100vh-64px)]">
+      <div className="mb-10 mt-2">
+        <h2 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-4">Workspace</h2>
+      </div>
+      <nav className="flex-1 space-y-2">
+        {navItems.map((item, i) => {
+          const isActive = location.pathname === item.path || (item.path === '/dashboard' && location.pathname === '/');
+          
+          return (
+            <Link
+              key={i}
+              to={item.path}
+              className={`flex items-center gap-3 w-full px-4 py-3 rounded-xl transition-all outline-none focus-visible:ring-2 focus-visible:ring-accent-indigo ${
+                isActive 
+                ? 'bg-accent-indigo/10 text-accent-indigo' 
+                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/50'
+              }`}
+            >
+              <item.icon className="w-5 h-5" />
+              <span className="font-medium text-sm">{item.label}</span>
+            </Link>
+          );
+        })}
+      </nav>
+      <div className="mt-auto">
+        <div className="p-4 rounded-xl bg-gradient-to-br from-slate-900 to-slate-950 border border-slate-800/50">
+          <p className="text-xs text-slate-400 mb-3">Enterprise Plan Active</p>
+          <div className="flex items-center gap-2 text-accent-emerald text-sm font-medium">
+            <span className="w-2 h-2 rounded-full bg-accent-emerald animate-pulse" />
+            System Online
+          </div>
+        </div>
+      </div>
+    </aside>
+  );
+};
 
-      // Automatically trigger matching
-      if (result.extrapolated_BOM?.length > 0 || result.required_skills?.length > 0) {
-        setIsMatchingResources(true);
-        try {
-          const matchResponse = await matchResources(result.extrapolated_BOM, result.required_skills);
-          setMatchedHardware(matchResponse.data.data.matched_hardware || []);
-          setMatchedMentors(matchResponse.data.data.matched_mentors || []);
-        } catch (matchError) {
-          console.error('Matching error:', matchError);
-        } finally {
-          setIsMatchingResources(false);
-        }
-      }
-    } catch (error) {
-      console.error('Parse error:', error);
-      setIsParsingProject(false);
+// --- SKELETON LOADER ---
+const BentoSkeleton = () => (
+  <div className="animate-pulse space-y-4">
+    <div className="h-6 bg-slate-800 rounded-md w-1/3 mb-6" />
+    <div className="space-y-3">
+      <div className="h-10 bg-slate-800/50 rounded-lg w-full" />
+      <div className="h-10 bg-slate-800/50 rounded-lg w-full" />
+      <div className="h-10 bg-slate-800/50 rounded-lg w-3/4" />
+    </div>
+  </div>
+);
+
+// --- MAIN DASHBOARD CONTENT ---
+const DashboardContent = () => {
+  const { projectPrompt, setProjectPrompt, isLoading, hasLoaded, aiResult, matchedHardware, matchedMentors, submitPrompt } = useDashboardContext();
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+      submitPrompt();
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-hero">
-      <div className="max-w-4xl mx-auto px-4 py-10">
-        {/* Header */}
-        <div className="mb-8 animate-fade-in">
-          <h1 className="text-3xl font-bold mb-2">
-            Project <span className="gradient-text">Dashboard</span>
+    <main className="flex-1 bg-slate-950 p-4 md:p-8 overflow-y-auto">
+      <div className="max-w-6xl mx-auto space-y-8">
+        
+        {/* Top Center AI Input */}
+        <section className="max-w-3xl mx-auto text-center" aria-label="AI Project Builder">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-accent-indigo/10 border border-accent-indigo/20 text-accent-indigo text-xs font-mono mb-6">
+            <Sparkles className="w-3 h-3" /> AI Builder
+          </div>
+          <h1 className="text-3xl md:text-5xl font-black text-slate-100 mb-6 tracking-tight">
+            Describe Your Next <span className="text-accent-indigo">Innovation</span>
           </h1>
-          <p className="text-text-secondary">
-            Describe your project and let OmniPool's AI find everything you need.
-          </p>
-        </div>
-
-        {/* Project Input */}
-        <ProjectInput onSubmit={handleParseProject} isLoading={isParsingProject} />
-
-        {/* Loading skeletons */}
-        {isParsingProject && (
-          <div className="mt-8 space-y-4">
-            <SkeletonCard />
-            <SkeletonCard />
+          
+          <div className="relative group">
+            <div className="absolute -inset-1 bg-gradient-to-r from-accent-indigo to-accent-violet rounded-2xl blur opacity-25 group-focus-within:opacity-50 transition duration-1000 group-hover:duration-200" />
+            <div className="relative bg-slate-900 border border-slate-800 rounded-2xl shadow-xl overflow-hidden focus-within:ring-2 focus-within:ring-accent-indigo transition-all">
+              <textarea
+                value={projectPrompt}
+                onChange={(e) => setProjectPrompt(e.target.value)}
+                onKeyDown={handleKeyDown}
+                disabled={isLoading}
+                placeholder="E.g., I want to build a self-watering smart planter using an ESP32 and soil sensors..."
+                className="w-full h-32 md:h-40 bg-transparent text-slate-200 placeholder-slate-500 p-6 resize-none outline-none text-lg"
+                aria-label="Project Description"
+              />
+              <div className="flex justify-between items-center p-4 border-t border-slate-800 bg-slate-900/50">
+                <span className="text-xs text-slate-500 hidden sm:inline-block">Press <kbd className="font-mono bg-slate-800 px-1 rounded">Cmd+Enter</kbd> to build</span>
+                <button
+                  onClick={submitPrompt}
+                  disabled={isLoading || !projectPrompt.trim()}
+                  className="flex items-center gap-2 bg-accent-indigo hover:bg-accent-indigo/90 disabled:bg-slate-800 disabled:text-slate-500 text-white font-medium px-6 py-2.5 rounded-lg transition-all outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Analyzing...
+                    </>
+                  ) : (
+                    <>
+                      Generate Resources <ArrowRight className="w-4 h-4" />
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
           </div>
-        )}
+        </section>
 
-        {/* Results */}
-        {parseResult && (
-          <div className="mt-8 space-y-6">
-            {/* Project title */}
-            <div className="animate-fade-in-up">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-1 h-8 rounded-full bg-gradient-to-b from-accent-indigo to-accent-violet" />
-                <h2 className="text-xl font-bold text-text-primary">{parseResult.title}</h2>
-              </div>
-            </div>
-
-            {/* BOM + Skills row */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <BOMPanel items={parseResult.extrapolated_BOM} />
-              <SkillsPanel skills={parseResult.required_skills} />
-            </div>
-
-            {/* Matching section */}
-            {isMatchingResources && (
-              <div className="space-y-4">
-                <SkeletonCard />
-                <SkeletonCard />
-              </div>
-            )}
-
-            {!isMatchingResources && (matchedHardware.length > 0 || matchedMentors.length > 0) && (
-              <div className="space-y-6">
-                <div className="flex items-center gap-3 animate-fade-in">
-                  <div className="w-1 h-8 rounded-full bg-gradient-to-b from-accent-emerald to-accent-cyan" />
-                  <h2 className="text-xl font-bold text-text-primary">Community Matches</h2>
+        {/* Bento Grid layout */}
+        {(isLoading || hasLoaded) && (
+          <section
+            className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-12"
+            aria-live="polite"
+            aria-atomic="true"
+            aria-busy={isLoading}
+          >
+            <AnimatePresence mode="popLayout">
+              {/* 1. Bill of Materials */}
+              <motion.article 
+                key="bom-card"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-slate-900/80 border border-slate-800/80 rounded-3xl p-6 glass backdrop-blur-md relative overflow-hidden focus-within:ring-2 focus-within:ring-accent-indigo"
+                tabIndex={0}
+              >
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="p-2 bg-accent-indigo/10 rounded-lg text-accent-indigo">
+                    <Cpu className="w-5 h-5" />
+                  </div>
+                  <h3 className="text-lg font-bold text-slate-200">Bill of Materials</h3>
                 </div>
-                <HardwareMatches items={matchedHardware} />
-                <MentorMatches mentors={matchedMentors} />
-              </div>
-            )}
-          </div>
+                {isLoading ? <BentoSkeleton /> : (
+                  <ul className="space-y-3">
+                    {aiResult?.extrapolated_BOM?.map((item, idx) => (
+                      <li key={idx} className="flex justify-between items-center bg-slate-800/30 p-3 rounded-xl border border-slate-800/50">
+                        <span className="text-sm font-medium text-slate-300">{item.hardware_name}</span>
+                        <span className="text-xs font-mono font-bold bg-accent-indigo/10 text-accent-indigo px-2 py-1 rounded">x{item.quantity}</span>
+                      </li>
+                    ))}
+                    {!aiResult?.extrapolated_BOM?.length && <p className="text-slate-500 text-sm">No hardware detected.</p>}
+                  </ul>
+                )}
+              </motion.article>
+
+              {/* 2. Required Technical Skills */}
+              <motion.article 
+                key="skills-card"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+                className="bg-slate-900/80 border border-slate-800/80 rounded-3xl p-6 glass backdrop-blur-md relative overflow-hidden focus-within:ring-2 focus-within:ring-accent-cyan"
+                tabIndex={0}
+              >
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="p-2 bg-accent-cyan/10 rounded-lg text-accent-cyan">
+                    <Code2 className="w-5 h-5" />
+                  </div>
+                  <h3 className="text-lg font-bold text-slate-200">Required Skills</h3>
+                </div>
+                {isLoading ? <BentoSkeleton /> : (
+                  <div className="flex flex-wrap gap-2">
+                    {aiResult?.required_skills?.map((skill, idx) => (
+                      <span key={idx} className="text-xs font-medium bg-slate-800/50 border border-slate-700 text-slate-300 px-3 py-1.5 rounded-full">
+                        {skill}
+                      </span>
+                    ))}
+                    {!aiResult?.required_skills?.length && <p className="text-slate-500 text-sm">No specific skills parsed.</p>}
+                  </div>
+                )}
+              </motion.article>
+
+              {/* 3. Matched Local Hardware */}
+              <motion.article 
+                key="hardware-card"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+                className="bg-slate-900/80 border border-slate-800/80 rounded-3xl p-6 glass backdrop-blur-md relative overflow-hidden focus-within:ring-2 focus-within:ring-accent-emerald"
+                tabIndex={0}
+              >
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="p-2 bg-accent-emerald/10 rounded-lg text-accent-emerald">
+                    <Search className="w-5 h-5" />
+                  </div>
+                  <h3 className="text-lg font-bold text-slate-200">Local Hardware Matches</h3>
+                </div>
+                {isLoading ? <BentoSkeleton /> : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {matchedHardware?.length > 0 ? matchedHardware.map((hw, idx) => (
+                      <div key={idx} className="bg-slate-800/30 p-3 rounded-xl border border-slate-800/50 flex flex-col">
+                        <span className="text-sm font-medium text-slate-300 truncate">{hw.name}</span>
+                        <span className="text-xs text-accent-emerald mt-1">{hw.status}</span>
+                      </div>
+                    )) : (
+                      <p className="text-slate-500 text-sm col-span-2">No local community hardware available for these parts yet.</p>
+                    )}
+                  </div>
+                )}
+              </motion.article>
+
+              {/* 4. Matched Mentors */}
+              <motion.article 
+                key="mentors-card"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+                className="bg-slate-900/80 border border-slate-800/80 rounded-3xl p-6 glass backdrop-blur-md relative overflow-hidden focus-within:ring-2 focus-within:ring-accent-rose"
+                tabIndex={0}
+              >
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="p-2 bg-accent-rose/10 rounded-lg text-accent-rose">
+                    <Users className="w-5 h-5" />
+                  </div>
+                  <h3 className="text-lg font-bold text-slate-200">Expert Mentors</h3>
+                </div>
+                {isLoading ? <BentoSkeleton /> : (
+                  <ul className="space-y-3">
+                    {matchedMentors?.length > 0 ? matchedMentors.map((mentor, idx) => (
+                      <li key={idx} className="flex items-center gap-3 bg-slate-800/30 p-3 rounded-xl border border-slate-800/50">
+                        <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-xs font-bold text-slate-300">
+                          {mentor.name.charAt(0)}
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="text-sm font-medium text-slate-300">{mentor.name}</span>
+                          <span className="text-xs text-slate-500 truncate">{mentor.expertise.slice(0,2).join(', ')}</span>
+                        </div>
+                      </li>
+                    )) : (
+                      <p className="text-slate-500 text-sm">No matched mentors nearby.</p>
+                    )}
+                  </ul>
+                )}
+              </motion.article>
+            </AnimatePresence>
+          </section>
         )}
       </div>
-    </div>
+    </main>
+  );
+};
+
+// --- ROOT PAGE COMPONENT ---
+const UserDashboard: React.FC = () => {
+  return (
+    <DashboardProvider>
+      <div className="flex min-h-[calc(100vh-64px)] bg-slate-950 text-slate-200 font-sans">
+        <Sidebar />
+        <DashboardContent />
+      </div>
+    </DashboardProvider>
   );
 };
 

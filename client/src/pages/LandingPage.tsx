@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import Button from '../components/ui/Button';
+import { motion, useScroll, useTransform, useSpring, useInView } from 'framer-motion';
 
 const LandingPage: React.FC = () => {
   return (
@@ -19,9 +20,18 @@ const HeroSection: React.FC = () => {
     <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden px-4">
       {/* Animated background orbs */}
       <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 w-72 h-72 bg-accent-indigo/10 rounded-full blur-3xl animate-float" />
-        <div className="absolute bottom-1/3 right-1/4 w-96 h-96 bg-accent-violet/8 rounded-full blur-3xl animate-float" style={{ animationDelay: '2s' }} />
-        <div className="absolute top-1/2 right-1/3 w-64 h-64 bg-accent-cyan/6 rounded-full blur-3xl animate-float" style={{ animationDelay: '4s' }} />
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 2 }}
+          className="absolute top-1/4 left-1/4 w-72 h-72 bg-accent-indigo/10 rounded-full blur-3xl animate-float" 
+        />
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 2, delay: 0.5 }}
+          className="absolute bottom-1/3 right-1/4 w-96 h-96 bg-accent-violet/8 rounded-full blur-3xl animate-float" style={{ animationDelay: '2s' }} 
+        />
       </div>
 
       {/* Grid pattern overlay */}
@@ -34,27 +44,36 @@ const HeroSection: React.FC = () => {
       />
 
       <div className="relative max-w-4xl mx-auto text-center">
-        {/* Tag */}
-        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-accent-indigo/10 border border-accent-indigo/20 text-accent-indigo text-sm font-medium mb-6 animate-fade-in-up stagger-1">
-          <span className="w-2 h-2 rounded-full bg-accent-emerald animate-pulse" />
-          AI-Powered Community Platform
-        </div>
-
         {/* Headline */}
-        <h1 className="text-5xl sm:text-6xl lg:text-7xl font-extrabold leading-tight mb-6 animate-fade-in-up stagger-2">
+        <motion.h1 
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
+          className="text-5xl sm:text-6xl lg:text-7xl font-extrabold leading-tight mb-6"
+        >
           The Community{' '}
           <span className="gradient-text">Hardware & Skill</span>{' '}
           Exchange
-        </h1>
+        </motion.h1>
 
         {/* Subtext */}
-        <p className="text-lg sm:text-xl text-text-secondary max-w-2xl mx-auto mb-10 leading-relaxed animate-fade-in-up stagger-3">
+        <motion.p 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
+          className="text-lg sm:text-xl text-text-secondary max-w-2xl mx-auto mb-10 leading-relaxed"
+        >
           Describe your project in plain English. Our AI extracts exactly what hardware you need,
           finds it in your community, and connects you with expert mentors — all in seconds.
-        </p>
+        </motion.p>
 
         {/* CTAs */}
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-fade-in-up stagger-4">
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.4, ease: "easeOut" }}
+          className="flex flex-col sm:flex-row items-center justify-center gap-4"
+        >
           <Link to="/dashboard">
             <Button size="lg" variant="primary">
               Start Building
@@ -63,20 +82,25 @@ const HeroSection: React.FC = () => {
               </svg>
             </Button>
           </Link>
-          <Link to="/hardware">
+          <Link to="/registry">
             <Button size="lg" variant="secondary">
-              Share Your Hardware
+              Explore Registry
             </Button>
           </Link>
-        </div>
+        </motion.div>
 
         {/* Preview badge */}
-        <div className="mt-16 animate-fade-in-up stagger-5">
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.8, delay: 0.6, ease: "easeOut" }}
+          className="mt-16"
+        >
           <div className="inline-flex items-center gap-3 glass-card px-6 py-3 text-sm text-text-secondary">
             <span className="text-accent-emerald font-mono font-bold">✓</span>
             <span>Works without sign-up in development mode</span>
           </div>
-        </div>
+        </motion.div>
       </div>
     </section>
   );
@@ -90,88 +114,64 @@ const FeaturesSection: React.FC = () => {
       title: 'Share Hardware',
       description: 'List your idle Raspberry Pis, Arduinos, sensors, and tools for your community to borrow.',
       color: 'from-accent-cyan to-accent-emerald',
-      borderColor: 'border-accent-cyan/20',
     },
     {
       icon: '🧠',
       title: 'AI-Powered Matching',
       description: 'Describe your project in natural language. Our AI generates a complete BOM and matches resources instantly.',
       color: 'from-accent-indigo to-accent-violet',
-      borderColor: 'border-accent-indigo/20',
     },
     {
       icon: '👥',
       title: 'Find Mentors',
       description: 'Connect with nearby experts who have the exact skills your project needs. Learn while you build.',
       color: 'from-accent-violet to-accent-rose',
-      borderColor: 'border-accent-violet/20',
     },
   ];
 
   return (
-    <section className="py-24 px-4">
+    <section className="py-24 px-4 overflow-hidden">
       <div className="max-w-6xl mx-auto">
-        <div className="text-center mb-16">
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.3 }}
+          className="text-center mb-16"
+        >
           <h2 className="text-3xl sm:text-4xl font-bold mb-4">
             Everything You Need to <span className="gradient-text">Build Faster</span>
           </h2>
           <p className="text-text-secondary max-w-xl mx-auto">
             OmniPool brings together hardware sharing, AI project analysis, and community mentorship in one platform.
           </p>
-        </div>
+        </motion.div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {features.map((feature, index) => (
-            <FeatureCard key={feature.title} feature={feature} index={index} />
+            <motion.div
+              key={feature.title}
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.3, margin: "100px" }}
+              transition={{ duration: 0.6, delay: index * 0.15 }}
+              className="glass-card p-8 text-center group hover:border-accent-indigo/50 transition-colors"
+            >
+              {/* Icon */}
+              <div className={`
+                w-16 h-16 rounded-2xl bg-gradient-to-br ${feature.color}
+                flex items-center justify-center text-2xl mx-auto mb-5
+                group-hover:scale-110 group-hover:shadow-glow-md transition-all duration-300
+              `}>
+                {feature.icon}
+              </div>
+
+              <h3 className="text-xl font-semibold mb-3 text-text-primary">{feature.title}</h3>
+              <p className="text-text-secondary text-sm leading-relaxed">{feature.description}</p>
+            </motion.div>
           ))}
         </div>
       </div>
     </section>
-  );
-};
-
-interface Feature {
-  icon: string;
-  title: string;
-  description: string;
-  color: string;
-  borderColor: string;
-}
-
-const FeatureCard: React.FC<{ feature: Feature; index: number }> = ({ feature, index }) => {
-  const ref = useRef<HTMLDivElement>(null);
-  const [isVisible, setIsVisible] = useState(false);
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting) setIsVisible(true); },
-      { threshold: 0.2 }
-    );
-    if (ref.current) observer.observe(ref.current);
-    return () => observer.disconnect();
-  }, []);
-
-  return (
-    <div
-      ref={ref}
-      className={`
-        glass-card p-8 text-center group
-        ${isVisible ? 'animate-fade-in-up' : 'opacity-0'}
-      `}
-      style={{ animationDelay: `${index * 0.15}s` }}
-    >
-      {/* Icon */}
-      <div className={`
-        w-16 h-16 rounded-2xl bg-gradient-to-br ${feature.color}
-        flex items-center justify-center text-2xl mx-auto mb-5
-        group-hover:scale-110 group-hover:shadow-glow-md transition-all duration-300
-      `}>
-        {feature.icon}
-      </div>
-
-      <h3 className="text-xl font-semibold mb-3 text-text-primary">{feature.title}</h3>
-      <p className="text-text-secondary text-sm leading-relaxed">{feature.description}</p>
-    </div>
   );
 };
 
@@ -210,70 +210,100 @@ const HowItWorksSection: React.FC = () => {
     },
   ];
 
+  const containerRef = useRef<HTMLDivElement>(null);
+  
+  // Track scroll within the "How It Works" container
+  const { scrollYProgress } = useScroll({
+    target: containerRef,
+    offset: ["start center", "end center"] // The animation triggers precisely as the block crosses the middle of the screen
+  });
+
+  // Spring physical physics for smooth scrolling reaction
+  const lineProgress = useSpring(scrollYProgress, {
+    stiffness: 100,
+    damping: 30,
+    restDelta: 0.001
+  });
+
   return (
-    <section className="py-24 px-4 bg-bg-secondary/30">
+    <section className="py-24 px-4 bg-bg-secondary/30 relative" ref={containerRef}>
       <div className="max-w-5xl mx-auto">
-        <div className="text-center mb-16">
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.3 }}
+          className="text-center mb-16"
+        >
           <h2 className="text-3xl sm:text-4xl font-bold mb-4">
             How It <span className="gradient-text">Works</span>
           </h2>
           <p className="text-text-secondary max-w-lg mx-auto">
             From idea to reality in three simple steps.
           </p>
-        </div>
+        </motion.div>
 
         <div className="relative">
-          {/* Connecting line */}
-          <div className="hidden md:block absolute top-1/2 left-0 right-0 h-px bg-gradient-to-r from-transparent via-accent-indigo/30 to-transparent -translate-y-1/2" />
+          {/* Base Desktop Horizontal Line (Faded) */}
+          <div className="hidden md:block absolute top-8 left-0 right-0 h-1 bg-slate-800 rounded z-0" />
+          
+          {/* Animated Glow Line Progress (Desktop) */}
+          <motion.div 
+            className="hidden md:block absolute top-8 left-0 right-0 h-1 bg-gradient-to-r from-accent-cyan via-accent-indigo to-accent-violet rounded z-0 origin-left"
+            style={{ scaleX: lineProgress }} 
+          />
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative">
-            {steps.map((step, index) => (
-              <StepCard key={step.step} step={step} index={index} />
-            ))}
+          {/* Base Mobile Vertical Line (Faded) */}
+          <div className="block md:hidden absolute top-0 bottom-0 left-8 w-1 bg-slate-800 rounded z-0" />
+          
+          {/* Animated Glow Line Progress (Mobile) */}
+          <motion.div 
+            className="block md:hidden absolute top-0 bottom-0 left-8 w-1 bg-gradient-to-b from-accent-cyan via-accent-indigo to-accent-violet rounded z-0 origin-top"
+            style={{ scaleY: lineProgress }} 
+          />
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative z-10 w-full">
+            {steps.map((step, index) => {
+              // Create local intersections to ping pong bubbles
+              const stepRef = useRef(null);
+              const isInView = useInView(stepRef, { margin: "-20% 0px -20% 0px", once: true });
+              
+              return (
+                <div 
+                  key={step.step}
+                  ref={stepRef} 
+                  className={`
+                    relative flex flex-col items-center md:text-center text-left md:items-center
+                    flex-row md:flex-col gap-6 md:gap-0 pl-20 md:pl-0
+                  `}
+                >
+                  {/* Step bubble */}
+                  <motion.div 
+                    initial={{ scale: 0.8, opacity: 0 }}
+                    animate={isInView ? { scale: 1, opacity: 1 } : { scale: 0.8, opacity: 0 }}
+                    transition={{ type: "spring", stiffness: 200, damping: 10, delay: 0.1 }}
+                    className={`
+                      absolute md:relative left-0 md:left-auto top-0 md:top-auto
+                      inline-flex items-center justify-center w-16 h-16 rounded-2xl 
+                      transition-colors duration-500
+                      ${isInView ? 'shadow-[0_0_30px_rgba(99,102,241,0.5)] bg-slate-900 border-accent-indigo text-accent-indigo' : 'bg-bg-tertiary border-border-default text-text-muted'}
+                      border-2 z-10 mb-5 
+                    `}
+                  >
+                    {step.icon}
+                  </motion.div>
+
+                  <div>
+                    <div className="text-xs font-mono text-accent-violet mb-2 hidden md:block">{step.step}</div>
+                    <h3 className="text-lg font-semibold mb-2">{step.title}</h3>
+                    <p className="text-text-secondary text-sm leading-relaxed">{step.description}</p>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>
     </section>
-  );
-};
-
-interface Step {
-  step: string;
-  title: string;
-  description: string;
-  icon: React.ReactNode;
-}
-
-const StepCard: React.FC<{ step: Step; index: number }> = ({ step, index }) => {
-  const ref = useRef<HTMLDivElement>(null);
-  const [isVisible, setIsVisible] = useState(false);
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting) setIsVisible(true); },
-      { threshold: 0.2 }
-    );
-    if (ref.current) observer.observe(ref.current);
-    return () => observer.disconnect();
-  }, []);
-
-  return (
-    <div
-      ref={ref}
-      className={`
-        relative text-center
-        ${isVisible ? 'animate-fade-in-up' : 'opacity-0'}
-      `}
-      style={{ animationDelay: `${index * 0.2}s` }}
-    >
-      {/* Step number */}
-      <div className="relative inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-bg-tertiary border border-border-default mb-5 text-accent-indigo z-10 bg-bg-primary">
-        {step.icon}
-      </div>
-      <div className="text-xs font-mono text-accent-violet mb-2">{step.step}</div>
-      <h3 className="text-lg font-semibold mb-2">{step.title}</h3>
-      <p className="text-text-secondary text-sm leading-relaxed">{step.description}</p>
-    </div>
   );
 };
 
@@ -289,13 +319,18 @@ const StatsSection: React.FC = () => {
   return (
     <section className="py-20 px-4">
       <div className="max-w-5xl mx-auto">
-        <div className="glass-card p-10 md:p-14">
+        <motion.div 
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.5 }}
+          className="glass-card p-10 md:p-14 border border-accent-indigo/10 shadow-[0_0_60px_rgba(99,102,241,0.05)]"
+        >
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
             {stats.map((stat) => (
               <AnimatedCounter key={stat.label} stat={stat} />
             ))}
           </div>
-        </div>
+        </motion.div>
       </div>
     </section>
   );
@@ -310,32 +345,25 @@ interface StatItem {
 const AnimatedCounter: React.FC<{ stat: StatItem }> = ({ stat }) => {
   const ref = useRef<HTMLDivElement>(null);
   const [count, setCount] = useState(0);
-  const [hasAnimated, setHasAnimated] = useState(false);
+  const isInView = useInView(ref, { once: true, margin: "-10%" });
 
   useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting && !hasAnimated) {
-          setHasAnimated(true);
-          // Animate count
-          const duration = 2000;
-          const start = performance.now();
-          const animate = (now: number) => {
-            const elapsed = now - start;
-            const progress = Math.min(elapsed / duration, 1);
-            // ease out cubic
-            const eased = 1 - Math.pow(1 - progress, 3);
-            setCount(Math.floor(eased * stat.value));
-            if (progress < 1) requestAnimationFrame(animate);
-          };
-          requestAnimationFrame(animate);
-        }
-      },
-      { threshold: 0.5 }
-    );
-    if (ref.current) observer.observe(ref.current);
-    return () => observer.disconnect();
-  }, [hasAnimated, stat.value]);
+    if (isInView) {
+      const duration = 2000;
+      const start = performance.now();
+      
+      const animate = (now: number) => {
+        const elapsed = now - start;
+        const progress = Math.min(elapsed / duration, 1);
+        const eased = 1 - Math.pow(1 - progress, 3);
+        setCount(Math.floor(eased * stat.value));
+        
+        if (progress < 1) requestAnimationFrame(animate);
+      };
+      
+      requestAnimationFrame(animate);
+    }
+  }, [isInView, stat.value]);
 
   return (
     <div ref={ref} className="text-center">

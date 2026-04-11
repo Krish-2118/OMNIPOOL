@@ -8,8 +8,9 @@ const Navbar: React.FC = () => {
   const navLinks = [
     { path: '/', label: 'Home' },
     { path: '/dashboard', label: 'Dashboard' },
-    { path: '/hardware', label: 'Hardware' },
+    { path: '/registry', label: 'Registry' },
     { path: '/skills', label: 'Skills' },
+    { path: '/enterprise', label: 'Enterprise' },
   ];
 
   const isActive = (path: string) => location.pathname === path;
@@ -46,6 +47,16 @@ const Navbar: React.FC = () => {
                 {link.label}
               </Link>
             ))}
+          </div>
+
+          {/* Auth Links (Desktop) */}
+          <div className="hidden md:flex items-center gap-4 ml-4">
+            <Link to="/signin" className="text-sm font-medium text-text-secondary hover:text-text-primary transition-colors">
+              Sign In
+            </Link>
+            <Link to="/signup" className="px-4 py-2 rounded-lg text-sm font-medium bg-gradient-to-r from-accent-indigo to-accent-violet text-white hover:shadow-glow-sm transition-all duration-200">
+              Sign Up
+            </Link>
           </div>
 
           {/* Mobile Menu Button */}
@@ -85,6 +96,15 @@ const Navbar: React.FC = () => {
                 {link.label}
               </Link>
             ))}
+            
+            <div className="border-t border-border-default/50 mt-2 pt-2 flex flex-col gap-2">
+              <Link to="/signin" onClick={() => setIsMobileOpen(false)} className="block px-4 py-2.5 rounded-lg text-sm font-medium text-text-secondary hover:text-text-primary hover:bg-bg-glass transition-all text-center">
+                Sign In
+              </Link>
+              <Link to="/signup" onClick={() => setIsMobileOpen(false)} className="block px-4 py-2.5 rounded-lg text-sm font-medium bg-gradient-to-r from-accent-indigo to-accent-violet text-white text-center">
+                Sign Up
+              </Link>
+            </div>
           </div>
         </div>
       )}
