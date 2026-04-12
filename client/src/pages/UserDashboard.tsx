@@ -16,11 +16,11 @@ const Sidebar = () => {
   ];
 
   return (
-    <aside className="hidden md:flex flex-col w-64 bg-slate-950 border-r border-slate-800/50 p-6 z-10 sticky top-[64px] h-[calc(100vh-64px)]">
+    <aside className="hidden md:flex flex-col w-64 bg-white/50 backdrop-blur-xl border-r border-border-default p-6 z-10 sticky top-[64px] h-[calc(100vh-64px)]">
       <div className="mb-10 mt-2">
-        <h2 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-4">Workspace</h2>
+        <h2 className="text-xs font-bold text-text-muted uppercase tracking-wider mb-4">Workspace</h2>
       </div>
-      <nav className="flex-1 space-y-2">
+      <nav className="flex-1 space-y-1.5">
         {navItems.map((item, i) => {
           const isActive = location.pathname === item.path || (item.path === '/dashboard' && location.pathname === '/');
           
@@ -30,19 +30,19 @@ const Sidebar = () => {
               to={item.path}
               className={`flex items-center gap-3 w-full px-4 py-3 rounded-xl transition-all outline-none focus-visible:ring-2 focus-visible:ring-accent-indigo ${
                 isActive 
-                ? 'bg-accent-indigo/10 text-accent-indigo' 
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/50'
+                ? 'bg-accent-indigo/10 text-accent-indigo font-semibold' 
+                : 'text-text-secondary hover:text-text-primary hover:bg-bg-secondary/60'
               }`}
             >
               <item.icon className="w-5 h-5" />
-              <span className="font-medium text-sm">{item.label}</span>
+              <span className="text-sm">{item.label}</span>
             </Link>
           );
         })}
       </nav>
       <div className="mt-auto">
-        <div className="p-4 rounded-xl bg-gradient-to-br from-slate-900 to-slate-950 border border-slate-800/50">
-          <p className="text-xs text-slate-400 mb-3">Enterprise Plan Active</p>
+        <div className="p-4 rounded-2xl bg-gradient-to-br from-bg-secondary to-white border border-border-default">
+          <p className="text-xs text-text-muted mb-3">Enterprise Plan Active</p>
           <div className="flex items-center gap-2 text-accent-emerald text-sm font-medium">
             <span className="w-2 h-2 rounded-full bg-accent-emerald animate-pulse" />
             System Online
@@ -56,11 +56,11 @@ const Sidebar = () => {
 // --- SKELETON LOADER ---
 const BentoSkeleton = () => (
   <div className="animate-pulse space-y-4">
-    <div className="h-6 bg-slate-800 rounded-md w-1/3 mb-6" />
+    <div className="h-6 bg-bg-tertiary rounded-md w-1/3 mb-6" />
     <div className="space-y-3">
-      <div className="h-10 bg-slate-800/50 rounded-lg w-full" />
-      <div className="h-10 bg-slate-800/50 rounded-lg w-full" />
-      <div className="h-10 bg-slate-800/50 rounded-lg w-3/4" />
+      <div className="h-10 bg-bg-secondary rounded-lg w-full" />
+      <div className="h-10 bg-bg-secondary rounded-lg w-full" />
+      <div className="h-10 bg-bg-secondary rounded-lg w-3/4" />
     </div>
   </div>
 );
@@ -76,7 +76,7 @@ const DashboardContent = () => {
   };
 
   return (
-    <main className="flex-1 bg-slate-950 p-4 md:p-8 overflow-y-auto">
+    <main className="flex-1 bg-bg-primary bg-grid-texture p-4 md:p-8 overflow-y-auto">
       <div className="max-w-6xl mx-auto space-y-8">
         
         {/* Top Center AI Input */}
@@ -84,28 +84,28 @@ const DashboardContent = () => {
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-accent-indigo/10 border border-accent-indigo/20 text-accent-indigo text-xs font-mono mb-6">
             <Sparkles className="w-3 h-3" /> AI Builder
           </div>
-          <h1 className="text-3xl md:text-5xl font-black text-slate-100 mb-6 tracking-tight">
+          <h1 className="text-3xl md:text-5xl font-black text-text-primary mb-6 tracking-tight">
             Describe Your Next <span className="text-accent-indigo">Innovation</span>
           </h1>
           
           <div className="relative group">
-            <div className="absolute -inset-1 bg-gradient-to-r from-accent-indigo to-accent-violet rounded-2xl blur opacity-25 group-focus-within:opacity-50 transition duration-1000 group-hover:duration-200" />
-            <div className="relative bg-slate-900 border border-slate-800 rounded-2xl shadow-xl overflow-hidden focus-within:ring-2 focus-within:ring-accent-indigo transition-all">
+            <div className="absolute -inset-1 bg-gradient-to-r from-accent-indigo to-accent-violet rounded-2xl blur-md opacity-15 group-focus-within:opacity-30 transition duration-1000 group-hover:duration-200" />
+            <div className="relative bg-white/80 backdrop-blur-xl border border-border-default rounded-2xl shadow-xl overflow-hidden focus-within:ring-2 focus-within:ring-accent-indigo transition-all">
               <textarea
                 value={projectPrompt}
                 onChange={(e) => setProjectPrompt(e.target.value)}
                 onKeyDown={handleKeyDown}
                 disabled={isLoading}
                 placeholder="E.g., I want to build a self-watering smart planter using an ESP32 and soil sensors..."
-                className="w-full h-32 md:h-40 bg-transparent text-slate-200 placeholder-slate-500 p-6 resize-none outline-none text-lg"
+                className="w-full h-32 md:h-40 bg-transparent text-text-primary placeholder-text-muted p-6 resize-none outline-none text-lg"
                 aria-label="Project Description"
               />
-              <div className="flex justify-between items-center p-4 border-t border-slate-800 bg-slate-900/50">
-                <span className="text-xs text-slate-500 hidden sm:inline-block">Press <kbd className="font-mono bg-slate-800 px-1 rounded">Cmd+Enter</kbd> to build</span>
+              <div className="flex justify-between items-center p-4 border-t border-border-default bg-bg-secondary/30">
+                <span className="text-xs text-text-muted hidden sm:inline-block">Press <kbd className="font-mono bg-bg-tertiary px-1.5 py-0.5 rounded text-text-secondary">Cmd+Enter</kbd> to build</span>
                 <button
                   onClick={submitPrompt}
                   disabled={isLoading || !projectPrompt.trim()}
-                  className="flex items-center gap-2 bg-accent-indigo hover:bg-accent-indigo/90 disabled:bg-slate-800 disabled:text-slate-500 text-white font-medium px-6 py-2.5 rounded-lg transition-all outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
+                  className="flex items-center gap-2 bg-accent-indigo hover:bg-accent-violet disabled:bg-bg-tertiary disabled:text-text-muted text-white font-medium px-6 py-2.5 rounded-xl transition-all outline-none focus-visible:ring-2 focus-visible:ring-accent-indigo focus-visible:ring-offset-2 cursor-pointer disabled:cursor-not-allowed"
                 >
                   {isLoading ? (
                     <>
@@ -137,24 +137,24 @@ const DashboardContent = () => {
                 key="bom-card"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-slate-900/80 border border-slate-800/80 rounded-3xl p-6 glass backdrop-blur-md relative overflow-hidden focus-within:ring-2 focus-within:ring-accent-indigo"
+                className="glass-card p-6 rounded-[1.5rem] relative overflow-hidden focus-within:ring-2 focus-within:ring-accent-indigo"
                 tabIndex={0}
               >
                 <div className="flex items-center gap-3 mb-6">
-                  <div className="p-2 bg-accent-indigo/10 rounded-lg text-accent-indigo">
+                  <div className="p-2.5 bg-accent-indigo/10 rounded-xl text-accent-indigo">
                     <Cpu className="w-5 h-5" />
                   </div>
-                  <h3 className="text-lg font-bold text-slate-200">Bill of Materials</h3>
+                  <h3 className="text-lg font-bold text-text-primary">Bill of Materials</h3>
                 </div>
                 {isLoading ? <BentoSkeleton /> : (
                   <ul className="space-y-3">
                     {aiResult?.extrapolated_BOM?.map((item, idx) => (
-                      <li key={idx} className="flex justify-between items-center bg-slate-800/30 p-3 rounded-xl border border-slate-800/50">
-                        <span className="text-sm font-medium text-slate-300">{item.hardware_name}</span>
-                        <span className="text-xs font-mono font-bold bg-accent-indigo/10 text-accent-indigo px-2 py-1 rounded">x{item.quantity}</span>
+                      <li key={idx} className="flex justify-between items-center bg-bg-secondary/60 p-3.5 rounded-xl border border-border-default/50">
+                        <span className="text-sm font-medium text-text-primary">{item.hardware_name}</span>
+                        <span className="text-xs font-mono font-bold bg-accent-indigo/10 text-accent-indigo px-2.5 py-1 rounded-lg">x{item.quantity}</span>
                       </li>
                     ))}
-                    {!aiResult?.extrapolated_BOM?.length && <p className="text-slate-500 text-sm">No hardware detected.</p>}
+                    {!aiResult?.extrapolated_BOM?.length && <p className="text-text-muted text-sm">No hardware detected.</p>}
                   </ul>
                 )}
               </motion.article>
@@ -165,23 +165,23 @@ const DashboardContent = () => {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 }}
-                className="bg-slate-900/80 border border-slate-800/80 rounded-3xl p-6 glass backdrop-blur-md relative overflow-hidden focus-within:ring-2 focus-within:ring-accent-cyan"
+                className="glass-card p-6 rounded-[1.5rem] relative overflow-hidden focus-within:ring-2 focus-within:ring-accent-cyan"
                 tabIndex={0}
               >
                 <div className="flex items-center gap-3 mb-6">
-                  <div className="p-2 bg-accent-cyan/10 rounded-lg text-accent-cyan">
+                  <div className="p-2.5 bg-accent-cyan/10 rounded-xl text-accent-cyan">
                     <Code2 className="w-5 h-5" />
                   </div>
-                  <h3 className="text-lg font-bold text-slate-200">Required Skills</h3>
+                  <h3 className="text-lg font-bold text-text-primary">Required Skills</h3>
                 </div>
                 {isLoading ? <BentoSkeleton /> : (
                   <div className="flex flex-wrap gap-2">
                     {aiResult?.required_skills?.map((skill, idx) => (
-                      <span key={idx} className="text-xs font-medium bg-slate-800/50 border border-slate-700 text-slate-300 px-3 py-1.5 rounded-full">
+                      <span key={idx} className="text-xs font-medium bg-bg-secondary border border-border-default text-text-secondary px-3 py-1.5 rounded-full">
                         {skill}
                       </span>
                     ))}
-                    {!aiResult?.required_skills?.length && <p className="text-slate-500 text-sm">No specific skills parsed.</p>}
+                    {!aiResult?.required_skills?.length && <p className="text-text-muted text-sm">No specific skills parsed.</p>}
                   </div>
                 )}
               </motion.article>
@@ -192,24 +192,24 @@ const DashboardContent = () => {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 }}
-                className="bg-slate-900/80 border border-slate-800/80 rounded-3xl p-6 glass backdrop-blur-md relative overflow-hidden focus-within:ring-2 focus-within:ring-accent-emerald"
+                className="glass-card p-6 rounded-[1.5rem] relative overflow-hidden focus-within:ring-2 focus-within:ring-accent-emerald"
                 tabIndex={0}
               >
                 <div className="flex items-center gap-3 mb-6">
-                  <div className="p-2 bg-accent-emerald/10 rounded-lg text-accent-emerald">
+                  <div className="p-2.5 bg-accent-emerald/10 rounded-xl text-accent-emerald">
                     <Search className="w-5 h-5" />
                   </div>
-                  <h3 className="text-lg font-bold text-slate-200">Local Hardware Matches</h3>
+                  <h3 className="text-lg font-bold text-text-primary">Local Hardware Matches</h3>
                 </div>
                 {isLoading ? <BentoSkeleton /> : (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {matchedHardware?.length > 0 ? matchedHardware.map((hw, idx) => (
-                      <div key={idx} className="bg-slate-800/30 p-3 rounded-xl border border-slate-800/50 flex flex-col">
-                        <span className="text-sm font-medium text-slate-300 truncate">{hw.name}</span>
+                      <div key={idx} className="bg-bg-secondary/60 p-3.5 rounded-xl border border-border-default/50 flex flex-col">
+                        <span className="text-sm font-medium text-text-primary truncate">{hw.name}</span>
                         <span className="text-xs text-accent-emerald mt-1">{hw.status}</span>
                       </div>
                     )) : (
-                      <p className="text-slate-500 text-sm col-span-2">No local community hardware available for these parts yet.</p>
+                      <p className="text-text-muted text-sm col-span-2">No local community hardware available for these parts yet.</p>
                     )}
                   </div>
                 )}
@@ -221,29 +221,29 @@ const DashboardContent = () => {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3 }}
-                className="bg-slate-900/80 border border-slate-800/80 rounded-3xl p-6 glass backdrop-blur-md relative overflow-hidden focus-within:ring-2 focus-within:ring-accent-rose"
+                className="glass-card p-6 rounded-[1.5rem] relative overflow-hidden focus-within:ring-2 focus-within:ring-accent-rose"
                 tabIndex={0}
               >
                 <div className="flex items-center gap-3 mb-6">
-                  <div className="p-2 bg-accent-rose/10 rounded-lg text-accent-rose">
+                  <div className="p-2.5 bg-accent-rose/10 rounded-xl text-accent-rose">
                     <Users className="w-5 h-5" />
                   </div>
-                  <h3 className="text-lg font-bold text-slate-200">Expert Mentors</h3>
+                  <h3 className="text-lg font-bold text-text-primary">Expert Mentors</h3>
                 </div>
                 {isLoading ? <BentoSkeleton /> : (
                   <ul className="space-y-3">
                     {matchedMentors?.length > 0 ? matchedMentors.map((mentor, idx) => (
-                      <li key={idx} className="flex items-center gap-3 bg-slate-800/30 p-3 rounded-xl border border-slate-800/50">
-                        <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-xs font-bold text-slate-300">
+                      <li key={idx} className="flex items-center gap-3 bg-bg-secondary/60 p-3.5 rounded-xl border border-border-default/50">
+                        <div className="w-9 h-9 rounded-full bg-accent-indigo/10 flex items-center justify-center text-xs font-bold text-accent-indigo">
                           {mentor.name.charAt(0)}
                         </div>
                         <div className="flex flex-col">
-                          <span className="text-sm font-medium text-slate-300">{mentor.name}</span>
-                          <span className="text-xs text-slate-500 truncate">{mentor.expertise.slice(0,2).join(', ')}</span>
+                          <span className="text-sm font-medium text-text-primary">{mentor.name}</span>
+                          <span className="text-xs text-text-muted truncate">{mentor.expertise.slice(0,2).join(', ')}</span>
                         </div>
                       </li>
                     )) : (
-                      <p className="text-slate-500 text-sm">No matched mentors nearby.</p>
+                      <p className="text-text-muted text-sm">No matched mentors nearby.</p>
                     )}
                   </ul>
                 )}
@@ -260,7 +260,7 @@ const DashboardContent = () => {
 const UserDashboard: React.FC = () => {
   return (
     <DashboardProvider>
-      <div className="flex min-h-[calc(100vh-64px)] bg-slate-950 text-slate-200 font-sans">
+      <div className="flex min-h-[calc(100vh-64px)] bg-bg-primary font-sans">
         <Sidebar />
         <DashboardContent />
       </div>

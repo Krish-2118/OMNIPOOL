@@ -9,8 +9,8 @@ import EnterprisePage from './pages/EnterprisePage'
 function App() {
   return (
     <Routes>
+      <Route path="/" element={<LandingPage />} />
       <Route element={<Layout />}>
-        <Route path="/" element={<LandingPage />} />
         <Route path="/dashboard" element={<UserDashboard />} />
         <Route path="/registry" element={<RegistryPage />} />
         <Route path="/skills" element={<SkillsProfilePage />} />

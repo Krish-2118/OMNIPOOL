@@ -1,37 +1,49 @@
 @import "tailwindcss";
+@import url('https://api.fontshare.com/v2/css?f[]=clash-display@200,400,500,600,700&display=swap');
 
 /* ===== Custom Design System ===== */
 @theme {
-  --color-bg-primary: #0a0a0f;
-  --color-bg-secondary: #12121a;
-  --color-bg-tertiary: #1a1a2e;
-  --color-bg-card: rgba(26, 26, 46, 0.6);
-  --color-bg-glass: rgba(255, 255, 255, 0.04);
+  /* Replaced with Ivory/Lilac Core Theme */
+  --color-bg-primary: #F8F7F2;
+  --color-bg-secondary: #F0EBF5;
+  --color-bg-tertiary: #E8E2EC;
+  --color-bg-card: rgba(255, 255, 255, 0.6);
+  --color-bg-glass: rgba(255, 255, 255, 0.4);
+  
+  /* Landing Theme Colors (preserved for backward compat) */
+  --color-bg-ivory: #F8F7F2;
+  --color-text-dark: #1A1A1A;
+  --color-text-dark-muted: #4A4A4A;
+  --color-landing-primary: #8C7B9E;
+  --color-landing-secondary: #2D2D2D;
 
-  --color-text-primary: #f0f0f5;
-  --color-text-secondary: #a0a0b8;
-  --color-text-muted: #6b6b80;
+  --color-text-primary: #111111;
+  --color-text-secondary: #444444;
+  --color-text-muted: #888888;
 
-  --color-accent-indigo: #6366f1;
-  --color-accent-violet: #8b5cf6;
-  --color-accent-cyan: #06b6d4;
-  --color-accent-emerald: #10b981;
-  --color-accent-amber: #f59e0b;
-  --color-accent-rose: #f43f5e;
+  /* Muted Pastel Accents */
+  --color-accent-indigo: #8C7B9E;
+  --color-accent-violet: #6A5A7B;
+  --color-accent-cyan: #A5A5C0;
+  --color-accent-emerald: #84a59d;
+  --color-accent-amber: #e0b171;
+  --color-accent-rose: #e5989b;
 
-  --color-border-default: rgba(255, 255, 255, 0.08);
-  --color-border-hover: rgba(255, 255, 255, 0.16);
+  --color-border-default: rgba(140, 123, 158, 0.15); /* Soft purple trace */
+  --color-border-hover: rgba(140, 123, 158, 0.4);
+  --color-border-landing: rgba(0, 0, 0, 0.08);
 
-  --color-gradient-start: #6366f1;
-  --color-gradient-mid: #8b5cf6;
-  --color-gradient-end: #06b6d4;
+  --color-gradient-start: #8C7B9E;
+  --color-gradient-mid: #6A5A7B;
+  --color-gradient-end: #A5A5C0;
 
   --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-display: 'Clash Display', system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
 
-  --shadow-glow-sm: 0 0 15px rgba(99, 102, 241, 0.15);
-  --shadow-glow-md: 0 0 30px rgba(99, 102, 241, 0.2);
-  --shadow-glow-lg: 0 0 60px rgba(99, 102, 241, 0.25);
+  --shadow-glow-sm: 0 0 15px rgba(140, 123, 158, 0.15);
+  --shadow-glow-md: 0 0 30px rgba(140, 123, 158, 0.2);
+  --shadow-glow-lg: 0 0 60px rgba(140, 123, 158, 0.25);
 
   --radius-sm: 0.5rem;
   --radius-md: 0.75rem;
@@ -74,21 +86,22 @@
     background: var(--color-bg-glass);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
-    border: 1px solid var(--color-border-default);
+    border: 1px solid rgba(255, 255, 255, 0.5);
   }
 
   .glass-card {
-    background: var(--color-bg-card);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border: 1px solid var(--color-border-default);
+    background: linear-gradient(to bottom, rgba(255,255,255,0.9), rgba(255,255,255,0.4));
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(255, 255, 255, 0.6);
     border-radius: var(--radius-lg);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.03);
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .glass-card:hover {
     border-color: var(--color-border-hover);
-    box-shadow: var(--shadow-glow-sm);
+    box-shadow: 0 15px 45px rgba(140, 123, 158, 0.15);
     transform: translateY(-2px);
   }
 
@@ -132,10 +145,10 @@
 
   @keyframes pulse-glow {
     0%, 100% {
-      box-shadow: 0 0 15px rgba(99, 102, 241, 0.2);
+      box-shadow: 0 0 15px rgba(140, 123, 158, 0.1);
     }
     50% {
-      box-shadow: 0 0 30px rgba(99, 102, 241, 0.4);
+      box-shadow: 0 0 30px rgba(140, 123, 158, 0.25);
     }
   }
 
@@ -197,9 +210,23 @@
   }
 
   .bg-gradient-hero {
-    background: radial-gradient(ellipse at 20% 50%, rgba(99, 102, 241, 0.12) 0%, transparent 60%),
-                radial-gradient(ellipse at 80% 30%, rgba(139, 92, 246, 0.08) 0%, transparent 50%),
-                radial-gradient(ellipse at 50% 80%, rgba(6, 182, 212, 0.06) 0%, transparent 50%),
+    background: radial-gradient(ellipse at 20% 50%, rgba(140, 123, 158, 0.06) 0%, transparent 60%),
+                radial-gradient(ellipse at 80% 30%, rgba(106, 90, 123, 0.04) 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 80%, rgba(165, 165, 192, 0.04) 0%, transparent 50%),
                 var(--color-bg-primary);
+  }
+
+  /* Light grid texture — adds a subtle engineering blueprint feel */
+  .bg-grid-texture {
+    background-image:
+      linear-gradient(rgba(140, 123, 158, 0.07) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(140, 123, 158, 0.07) 1px, transparent 1px);
+    background-size: 32px 32px;
+  }
+
+  /* Dot grid variant */
+  .bg-dot-texture {
+    background-image: radial-gradient(circle, rgba(140, 123, 158, 0.12) 1px, transparent 1px);
+    background-size: 24px 24px;
   }
 }

@@ -1,173 +1,289 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import Button from '../components/ui/Button';
-import { motion, useScroll, useTransform, useSpring, useInView } from 'framer-motion';
+import { Canvas, useFrame, useThree } from '@react-three/fiber';
+import Footer from '../components/layout/Footer';
+import { Edges, useGLTF } from '@react-three/drei';
+import { useMemo } from 'react';
+import * as THREE from 'three';
+import gsap from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
-const LandingPage: React.FC = () => {
+gsap.registerPlugin(ScrollTrigger);
+
+// --- 3D Components ---
+
+const SketchMaterial = () => {
   return (
-    <div className="bg-gradient-hero">
-      <HeroSection />
-      <FeaturesSection />
-      <HowItWorksSection />
-      <StatsSection />
-    </div>
+    <meshStandardMaterial 
+      color="#f0f0f0"
+      roughness={0.9}
+      metalness={0.0}
+    />
   );
 };
 
-/* ===== Hero Section ===== */
-const HeroSection: React.FC = () => {
+const PCBBoard = () => {
+  const meshRef = useRef<THREE.Mesh>(null);
+
+  useFrame((state) => {
+    if (!meshRef.current) return;
+    const time = state.clock.getElapsedTime();
+    const scrollY = window.scrollY || 0;
+    
+    // Base floating
+    meshRef.current.position.y = Math.sin(time * 0.8) * 0.2 - 2 + (scrollY * 0.001);
+    meshRef.current.position.x = Math.sin(time * 0.4) * 0.1 - 4;
+    
+    // Add scroll based rotation parallax
+    meshRef.current.rotation.x = Math.sin(time * 0.3) * 0.05 + 1.2 + (scrollY * 0.0005);
+    meshRef.current.rotation.y = Math.cos(time * 0.4) * 0.05 + 0.2 + (scrollY * 0.0002);
+    meshRef.current.rotation.z = Math.sin(time * 0.2) * 0.05 - 0.2;
+  });
+
   return (
-    <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden px-4">
-      {/* Animated background orbs */}
-      <div className="absolute inset-0 pointer-events-none">
-        <motion.div 
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 2 }}
-          className="absolute top-1/4 left-1/4 w-72 h-72 bg-accent-indigo/10 rounded-full blur-3xl animate-float" 
-        />
-        <motion.div 
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 2, delay: 0.5 }}
-          className="absolute bottom-1/3 right-1/4 w-96 h-96 bg-accent-violet/8 rounded-full blur-3xl animate-float" style={{ animationDelay: '2s' }} 
-        />
-      </div>
-
-      {/* Grid pattern overlay */}
-      <div
-        className="absolute inset-0 opacity-[0.03]"
-        style={{
-          backgroundImage: `linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)`,
-          backgroundSize: '60px 60px',
-        }}
-      />
-
-      <div className="relative max-w-4xl mx-auto text-center">
-        {/* Headline */}
-        <motion.h1 
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, ease: "easeOut" }}
-          className="text-5xl sm:text-6xl lg:text-7xl font-extrabold leading-tight mb-6"
-        >
-          The Community{' '}
-          <span className="gradient-text">Hardware & Skill</span>{' '}
-          Exchange
-        </motion.h1>
-
-        {/* Subtext */}
-        <motion.p 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
-          className="text-lg sm:text-xl text-text-secondary max-w-2xl mx-auto mb-10 leading-relaxed"
-        >
-          Describe your project in plain English. Our AI extracts exactly what hardware you need,
-          finds it in your community, and connects you with expert mentors — all in seconds.
-        </motion.p>
-
-        {/* CTAs */}
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.4, ease: "easeOut" }}
-          className="flex flex-col sm:flex-row items-center justify-center gap-4"
-        >
-          <Link to="/dashboard">
-            <Button size="lg" variant="primary">
-              Start Building
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-              </svg>
-            </Button>
-          </Link>
-          <Link to="/registry">
-            <Button size="lg" variant="secondary">
-              Explore Registry
-            </Button>
-          </Link>
-        </motion.div>
-
-        {/* Preview badge */}
-        <motion.div 
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.8, delay: 0.6, ease: "easeOut" }}
-          className="mt-16"
-        >
-          <div className="inline-flex items-center gap-3 glass-card px-6 py-3 text-sm text-text-secondary">
-            <span className="text-accent-emerald font-mono font-bold">✓</span>
-            <span>Works without sign-up in development mode</span>
-          </div>
-        </motion.div>
-      </div>
-    </section>
+    // Smaller Scale per request: [7, 0.15, 5] from [9, 0.2, 7]
+    <mesh ref={meshRef} position={[-4, -2, -6]} scale={[7, 0.15, 5]}>
+      <boxGeometry args={[1, 1, 1]} />
+      <SketchMaterial />
+      <Edges scale={1.05} threshold={15} color="#1A1A1A" />
+      
+      {/* Main CPU */}
+      <mesh position={[0.1, 0.6, 0.1]} scale={[0.4, 1, 0.4]}>
+        <boxGeometry args={[1, 1, 1]} />
+        <SketchMaterial />
+        <Edges scale={1.05} threshold={15} color="#1A1A1A" />
+      </mesh>
+      {/* RAM Modules */}
+      <mesh position={[-0.3, 0.6, 0.2]} scale={[0.15, 0.5, 0.35]}>
+        <boxGeometry args={[1, 1, 1]} />
+        <SketchMaterial />
+        <Edges scale={1.05} threshold={15} color="#1A1A1A" />
+      </mesh>
+      <mesh position={[-0.3, 0.6, -0.2]} scale={[0.15, 0.5, 0.35]}>
+        <boxGeometry args={[1, 1, 1]} />
+        <SketchMaterial />
+        <Edges scale={1.05} threshold={15} color="#1A1A1A" />
+      </mesh>
+      {/* Capacitors */}
+      <mesh position={[0.4, 1, -0.3]} rotation={[Math.PI/2, 0, 0]} scale={[0.1, 0.1, 1]}>
+        <cylinderGeometry args={[1, 1, 1, 12]} />
+        <SketchMaterial />
+        <Edges scale={1.05} threshold={15} color="#1A1A1A" />
+      </mesh>
+      <mesh position={[0.3, 1, -0.4]} rotation={[Math.PI/2, 0, 0]} scale={[0.1, 0.1, 1]}>
+        <cylinderGeometry args={[1, 1, 1, 12]} />
+        <SketchMaterial />
+        <Edges scale={1.05} threshold={15} color="#1A1A1A" />
+      </mesh>
+      {/* Connectors */}
+      <mesh position={[-0.45, 0.6, 0]} scale={[0.1, 0.6, 0.8]}>
+        <boxGeometry args={[1, 1, 1]} />
+        <SketchMaterial />
+        <Edges scale={1.05} threshold={15} color="#1A1A1A" />
+      </mesh>
+    </mesh>
   );
 };
 
-/* ===== Features Section ===== */
-const FeaturesSection: React.FC = () => {
+const SolderingIron = () => {
+  const groupRef = useRef<THREE.Group>(null);
+  const { scene } = useGLTF('/soldering_iron.glb');
+  
+  const styledScene = useMemo(() => {
+    const clone = scene.clone();
+    const sketchMat = new THREE.MeshStandardMaterial({
+      color: "#dcdcdc",
+      roughness: 0.8,
+      metalness: 0.1,
+    });
+    const edgeMat = new THREE.LineBasicMaterial({ color: '#1A1A1A', linewidth: 1 });
+
+    clone.traverse((child) => {
+      if ((child as THREE.Mesh).isMesh) {
+        const mesh = child as THREE.Mesh;
+        mesh.material = sketchMat;
+        const edgesGeom = new THREE.EdgesGeometry(mesh.geometry, 15);
+        const line = new THREE.LineSegments(edgesGeom, edgeMat);
+        mesh.add(line);
+      }
+    });
+    return clone;
+  }, [scene]);
+
+  useFrame((state) => {
+    if (!groupRef.current) return;
+    const time = state.clock.getElapsedTime();
+    const scrollY = window.scrollY || 0;
+
+    groupRef.current.position.y = Math.cos(time * 0.7) * 0.2 + 3 - (scrollY * 0.002);
+    groupRef.current.position.x = Math.sin(time * 0.4) * 0.2 + 3;
+    
+    groupRef.current.rotation.x = Math.sin(time * 0.5) * 0.05 + 0.4 + (scrollY * 0.0005);
+    groupRef.current.rotation.y = Math.cos(time * 0.3) * 0.05 - 0.2;
+    groupRef.current.rotation.z = Math.cos(time * 0.3) * 0.05 + 2.34; // Flipped 180 deg to point tip leftwards
+  });
+
+  return (
+    <primitive ref={groupRef} object={styledScene} position={[3, 3, -4]} scale={[40, 40, 40]} />
+  );
+};
+
+const MouseParallax = () => {
+  const { camera } = useThree();
+  
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      const x = (e.clientX / window.innerWidth) * 2 - 1;
+      const y = -(e.clientY / window.innerHeight) * 2 + 1;
+      
+      gsap.to(camera.position, {
+        x: x * 0.5,
+        y: y * 0.5,
+        duration: 1,
+        ease: "power2.out"
+      });
+      camera.lookAt(0, 0, 0);
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, [camera]);
+
+  return null;
+};
+
+// --- Custom Navbar ---
+const LandingNavbar = () => {
+  return (
+    <nav className="absolute top-0 left-0 w-full z-50 px-10 py-8 flex items-center justify-between pointer-events-auto">
+      <div className="text-3xl font-bold tracking-tight text-[#1A1A1A]">
+        OmniPool
+      </div>
+      <div className="hidden md:flex items-center gap-10 text-[1.05rem] font-medium text-[#4A4A4A]">
+        <Link to="/" className="hover:text-[#1A1A1A] transition-colors">Home</Link>
+        <Link to="/dashboard" className="hover:text-[#1A1A1A] transition-colors">Dashboard</Link>
+        <Link to="/registry" className="hover:text-[#1A1A1A] transition-colors">Registry</Link>
+        <Link to="/skills" className="hover:text-[#1A1A1A] transition-colors">Skills</Link>
+        <Link to="/enterprise" className="hover:text-[#1A1A1A] transition-colors">Enterprise</Link>
+      </div>
+      <div className="flex items-center gap-8 text-[1.05rem] font-medium">
+        <Link to="#" className="text-[#4A4A4A] hover:text-[#1A1A1A] transition-colors">Sign In</Link>
+        <Link 
+          to="/dashboard" 
+          className="bg-[#8C7B9E] text-white px-7 py-3 rounded-2xl hover:bg-opacity-90 transition-all shadow-sm"
+        >
+          Sign Up
+        </Link>
+      </div>
+    </nav>
+  );
+};
+
+// --- Page Sections ---
+
+const AnimatedCounter: React.FC<{ value: number; suffix?: string }> = ({ value, suffix = '' }) => {
+  const [count, setCount] = useState(0);
+  const ref = useRef<HTMLDivElement>(null);
+  const valRef = useRef({ val: 0 });
+
+  useEffect(() => {
+    let ctx = gsap.context(() => {
+      ScrollTrigger.create({
+        trigger: ref.current,
+        start: 'top 85%',
+        once: true,
+        onEnter: () => {
+          gsap.to(valRef.current, {
+            val: value,
+            duration: 2.0,
+            ease: "power3.out",
+            onUpdate: () => {
+              setCount(Math.floor(valRef.current.val));
+            }
+          });
+        }
+      });
+    }, ref);
+    return () => ctx.revert();
+  }, [value]);
+
+  return <div ref={ref} className="text-4xl sm:text-5xl font-bold text-white mb-2">{count.toLocaleString()}{suffix}</div>;
+};
+
+const FeaturesSection = () => {
+  const sectionRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const ctx = gsap.context(() => {
+      gsap.fromTo('.feature-card', 
+        { y: 60, opacity: 0 },
+        {
+          scrollTrigger: {
+            trigger: sectionRef.current,
+            start: 'top 85%',
+          },
+          y: 0,
+          opacity: 1,
+          stagger: 0.15,
+          duration: 0.8,
+          ease: "power3.out"
+        }
+      );
+    }, sectionRef);
+    return () => ctx.revert();
+  }, []);
+
   const features = [
     {
       icon: '🔧',
       title: 'Share Hardware',
       description: 'List your idle Raspberry Pis, Arduinos, sensors, and tools for your community to borrow.',
-      color: 'from-accent-cyan to-accent-emerald',
     },
     {
       icon: '🧠',
       title: 'AI-Powered Matching',
       description: 'Describe your project in natural language. Our AI generates a complete BOM and matches resources instantly.',
-      color: 'from-accent-indigo to-accent-violet',
     },
     {
       icon: '👥',
       title: 'Find Mentors',
       description: 'Connect with nearby experts who have the exact skills your project needs. Learn while you build.',
-      color: 'from-accent-violet to-accent-rose',
     },
   ];
 
   return (
-    <section className="py-24 px-4 overflow-hidden">
+    <section ref={sectionRef} className="relative z-10 py-32 px-4 pointer-events-auto">
       <div className="max-w-6xl mx-auto">
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.3 }}
-          className="text-center mb-16"
-        >
-          <h2 className="text-3xl sm:text-4xl font-bold mb-4">
-            Everything You Need to <span className="gradient-text">Build Faster</span>
+        <div className="text-center mb-20">
+          <h2 className="text-4xl sm:text-5xl font-bold mb-6 text-[#1A1A1A] tracking-tight">
+            Everything You Need to <br/>
+            <span className="relative inline-block mt-2">
+              <span className="relative z-10 px-4 py-1 text-[#8C7B9E]">Build Faster</span>
+              <span className="absolute bottom-1 left-0 w-full h-[30%] bg-[#8C7B9E]/20 -z-10 rounded"></span>
+            </span>
           </h2>
-          <p className="text-text-secondary max-w-xl mx-auto">
-            OmniPool brings together hardware sharing, AI project analysis, and community mentorship in one platform.
+          <p className="text-[#4A4A4A] max-w-2xl mx-auto text-lg">
+            OmniPool brings together hardware sharing, AI project analysis, and community mentorship in one beautiful platform.
           </p>
-        </motion.div>
+        </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative z-20">
           {features.map((feature, index) => (
-            <motion.div
+            <div
               key={feature.title}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, amount: 0.3, margin: "100px" }}
-              transition={{ duration: 0.6, delay: index * 0.15 }}
-              className="glass-card p-8 text-center group hover:border-accent-indigo/50 transition-colors"
+              className="feature-card group relative p-10 text-center rounded-[2.5rem] bg-gradient-to-b from-white/90 to-white/40 backdrop-blur-2xl border border-white/60 shadow-xl shadow-black/[0.03] hover:shadow-2xl hover:shadow-[#8C7B9E]/20 hover:-translate-y-3 hover:border-[#8C7B9E]/40 transition-all duration-500 overflow-hidden"
             >
-              {/* Icon */}
-              <div className={`
-                w-16 h-16 rounded-2xl bg-gradient-to-br ${feature.color}
-                flex items-center justify-center text-2xl mx-auto mb-5
-                group-hover:scale-110 group-hover:shadow-glow-md transition-all duration-300
-              `}>
+              <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-[#8C7B9E]/[0.02] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+              
+              <div className="w-20 h-20 rounded-[1.5rem] bg-gradient-to-br from-[#F0EBF5] to-white flex items-center justify-center text-4xl mx-auto mb-8 shadow-[inset_0_2px_4px_rgba(255,255,255,0.7),_0_4px_10px_rgba(140,123,158,0.1)] group-hover:scale-110 group-hover:-rotate-3 transition-transform duration-500 ease-out">
                 {feature.icon}
               </div>
-
-              <h3 className="text-xl font-semibold mb-3 text-text-primary">{feature.title}</h3>
-              <p className="text-text-secondary text-sm leading-relaxed">{feature.description}</p>
-            </motion.div>
+              
+              <h3 className="text-2xl font-bold mb-4 text-[#111] tracking-tight">{feature.title}</h3>
+              <p className="text-[#444] leading-relaxed font-medium">{feature.description}</p>
+              
+              <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-0 h-1 bg-gradient-to-r from-transparent via-[#8C7B9E]/60 to-transparent group-hover:w-3/4 transition-all duration-500 ease-out" />
+            </div>
           ))}
         </div>
       </div>
@@ -175,131 +291,116 @@ const FeaturesSection: React.FC = () => {
   );
 };
 
-/* ===== How It Works Section ===== */
-const HowItWorksSection: React.FC = () => {
+const HowItWorksSection = () => {
+  const containerRef = useRef<HTMLDivElement>(null);
+  
+  useEffect(() => {
+    const ctx = gsap.context(() => {
+      gsap.fromTo('.step-bubble', 
+        { scale: 0, opacity: 0 },
+        {
+          scrollTrigger: {
+            trigger: containerRef.current,
+            start: 'top 60%',
+          },
+          scale: 1,
+          opacity: 1,
+          stagger: 0.2,
+          duration: 0.6,
+          ease: "back.out(1.5)"
+        }
+      );
+      gsap.fromTo('.step-text', 
+        { y: 20, opacity: 0 },
+        {
+          scrollTrigger: {
+            trigger: containerRef.current,
+            start: 'top 60%',
+          },
+          y: 0,
+          opacity: 1,
+          stagger: 0.2,
+          duration: 0.6,
+          delay: 0.2
+        }
+      );
+    }, containerRef);
+    return () => ctx.revert();
+  }, []);
+
   const steps = [
     {
       step: '01',
       title: 'Describe Your Project',
-      description: 'Type what you want to build in plain English. "I want to build a weather station with a temperature sensor and display."',
-      icon: (
-        <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-        </svg>
-      ),
+      description: 'Type what you want to build in plain English.',
     },
     {
       step: '02',
       title: 'AI Analyzes & Matches',
-      description: 'Gemini AI extracts a complete Bill of Materials, identifies required skills, and searches your community for matching resources.',
-      icon: (
-        <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-        </svg>
-      ),
+      description: 'Gemini AI extracts a complete Bill of Materials natively.',
     },
     {
       step: '03',
       title: 'Connect & Build',
-      description: 'Borrow available hardware from neighbors, team up with skilled mentors, and bring your project to life.',
-      icon: (
-        <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
-        </svg>
-      ),
+      description: 'Borrow hardware and team up with mentors locally.',
     },
   ];
 
-  const containerRef = useRef<HTMLDivElement>(null);
-  
-  // Track scroll within the "How It Works" container
-  const { scrollYProgress } = useScroll({
-    target: containerRef,
-    offset: ["start center", "end center"] // The animation triggers precisely as the block crosses the middle of the screen
-  });
+  return (
+    <section ref={containerRef} className="relative z-10 py-24 px-4 bg-[#F0EEEA]/80 backdrop-blur-md pointer-events-auto border-y border-black/5">
+      <div className="max-w-5xl mx-auto">
+        <div className="text-center mb-20">
+          <h2 className="text-4xl font-bold mb-4 text-[#1A1A1A] tracking-tight">
+            How It Works
+          </h2>
+          <p className="text-[#4A4A4A] max-w-lg mx-auto text-lg">
+            From idea to reality in three absolutely simple steps.
+          </p>
+        </div>
 
-  // Spring physical physics for smooth scrolling reaction
-  const lineProgress = useSpring(scrollYProgress, {
-    stiffness: 100,
-    damping: 30,
-    restDelta: 0.001
-  });
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-12 relative w-full">
+          {/* Subtle connecting line */}
+          <div className="hidden md:block absolute top-10 left-[10%] right-[10%] h-[2px] bg-[#8C7B9E]/20" />
+          
+          {steps.map((step) => (
+            <div key={step.step} className="relative flex flex-col items-center text-center">
+              <div className="step-bubble w-20 h-20 rounded-[1.5rem] bg-white border-2 border-[#8C7B9E] flex items-center justify-center text-2xl font-bold text-[#8C7B9E] z-10 shadow-lg mb-6">
+                {step.step}
+              </div>
+              <div className="step-text">
+                <h3 className="text-xl font-bold mb-3 text-[#1A1A1A]">{step.title}</h3>
+                <p className="text-[#555] leading-relaxed">{step.description}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+};
+
+const StatsSection = () => {
+  const stats = [
+    { label: 'Hardware Shared', value: 2800, suffix: '+' },
+    { label: 'Projects Matched', value: 1200, suffix: '+' },
+    { label: 'Community Mentors', value: 450, suffix: '+' },
+    { label: 'Cities Networked', value: 89, suffix: '' },
+  ];
 
   return (
-    <section className="py-24 px-4 bg-bg-secondary/30 relative" ref={containerRef}>
+    <section className="relative z-10 py-32 px-4 pointer-events-auto bg-[#F8F7F2]">
       <div className="max-w-5xl mx-auto">
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.3 }}
-          className="text-center mb-16"
-        >
-          <h2 className="text-3xl sm:text-4xl font-bold mb-4">
-            How It <span className="gradient-text">Works</span>
-          </h2>
-          <p className="text-text-secondary max-w-lg mx-auto">
-            From idea to reality in three simple steps.
-          </p>
-        </motion.div>
-
-        <div className="relative">
-          {/* Base Desktop Horizontal Line (Faded) */}
-          <div className="hidden md:block absolute top-8 left-0 right-0 h-1 bg-slate-800 rounded z-0" />
+        <div className="p-12 md:p-16 rounded-[3rem] bg-[#1A1A1A] shadow-2xl relative overflow-hidden">
+          {/* Subtle noise/texture layer */}
+          <div className="absolute inset-0 opacity-10 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-white to-transparent mix-blend-overlay"></div>
           
-          {/* Animated Glow Line Progress (Desktop) */}
-          <motion.div 
-            className="hidden md:block absolute top-8 left-0 right-0 h-1 bg-gradient-to-r from-accent-cyan via-accent-indigo to-accent-violet rounded z-0 origin-left"
-            style={{ scaleX: lineProgress }} 
-          />
-
-          {/* Base Mobile Vertical Line (Faded) */}
-          <div className="block md:hidden absolute top-0 bottom-0 left-8 w-1 bg-slate-800 rounded z-0" />
-          
-          {/* Animated Glow Line Progress (Mobile) */}
-          <motion.div 
-            className="block md:hidden absolute top-0 bottom-0 left-8 w-1 bg-gradient-to-b from-accent-cyan via-accent-indigo to-accent-violet rounded z-0 origin-top"
-            style={{ scaleY: lineProgress }} 
-          />
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative z-10 w-full">
-            {steps.map((step, index) => {
-              // Create local intersections to ping pong bubbles
-              const stepRef = useRef(null);
-              const isInView = useInView(stepRef, { margin: "-20% 0px -20% 0px", once: true });
-              
-              return (
-                <div 
-                  key={step.step}
-                  ref={stepRef} 
-                  className={`
-                    relative flex flex-col items-center md:text-center text-left md:items-center
-                    flex-row md:flex-col gap-6 md:gap-0 pl-20 md:pl-0
-                  `}
-                >
-                  {/* Step bubble */}
-                  <motion.div 
-                    initial={{ scale: 0.8, opacity: 0 }}
-                    animate={isInView ? { scale: 1, opacity: 1 } : { scale: 0.8, opacity: 0 }}
-                    transition={{ type: "spring", stiffness: 200, damping: 10, delay: 0.1 }}
-                    className={`
-                      absolute md:relative left-0 md:left-auto top-0 md:top-auto
-                      inline-flex items-center justify-center w-16 h-16 rounded-2xl 
-                      transition-colors duration-500
-                      ${isInView ? 'shadow-[0_0_30px_rgba(99,102,241,0.5)] bg-slate-900 border-accent-indigo text-accent-indigo' : 'bg-bg-tertiary border-border-default text-text-muted'}
-                      border-2 z-10 mb-5 
-                    `}
-                  >
-                    {step.icon}
-                  </motion.div>
-
-                  <div>
-                    <div className="text-xs font-mono text-accent-violet mb-2 hidden md:block">{step.step}</div>
-                    <h3 className="text-lg font-semibold mb-2">{step.title}</h3>
-                    <p className="text-text-secondary text-sm leading-relaxed">{step.description}</p>
-                  </div>
-                </div>
-              );
-            })}
+          <div className="relative grid grid-cols-2 md:grid-cols-4 gap-10">
+            {stats.map((stat) => (
+              <div key={stat.label} className="text-center">
+                <AnimatedCounter value={stat.value} suffix={stat.suffix} />
+                <div className="text-[#A0A0A0] font-medium">{stat.label}</div>
+              </div>
+            ))}
           </div>
         </div>
       </div>
@@ -307,70 +408,114 @@ const HowItWorksSection: React.FC = () => {
   );
 };
 
-/* ===== Stats Section ===== */
-const StatsSection: React.FC = () => {
-  const stats = [
-    { label: 'Hardware Items Shared', value: 2847, suffix: '+' },
-    { label: 'Projects Matched', value: 1203, suffix: '+' },
-    { label: 'Community Mentors', value: 456, suffix: '' },
-    { label: 'Cities Connected', value: 89, suffix: '' },
-  ];
-
-  return (
-    <section className="py-20 px-4">
-      <div className="max-w-5xl mx-auto">
-        <motion.div 
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.5 }}
-          className="glass-card p-10 md:p-14 border border-accent-indigo/10 shadow-[0_0_60px_rgba(99,102,241,0.05)]"
-        >
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-            {stats.map((stat) => (
-              <AnimatedCounter key={stat.label} stat={stat} />
-            ))}
-          </div>
-        </motion.div>
-      </div>
-    </section>
-  );
-};
-
-interface StatItem {
-  label: string;
-  value: number;
-  suffix: string;
-}
-
-const AnimatedCounter: React.FC<{ stat: StatItem }> = ({ stat }) => {
-  const ref = useRef<HTMLDivElement>(null);
-  const [count, setCount] = useState(0);
-  const isInView = useInView(ref, { once: true, margin: "-10%" });
-
+// --- Main Landing Page ---
+const LandingPage: React.FC = () => {
+  const containerRef = useRef<HTMLDivElement>(null);
+  
   useEffect(() => {
-    if (isInView) {
-      const duration = 2000;
-      const start = performance.now();
+    // Top Hero Initial GSAP Load Sequence 
+    const ctx = gsap.context(() => {
+      const tl = gsap.timeline();
       
-      const animate = (now: number) => {
-        const elapsed = now - start;
-        const progress = Math.min(elapsed / duration, 1);
-        const eased = 1 - Math.pow(1 - progress, 3);
-        setCount(Math.floor(eased * stat.value));
+      gsap.set('.landing-wrapper', { opacity: 0 });
+      gsap.set('.canvas-container', { opacity: 0 });
+      
+      tl.to('.landing-wrapper', { opacity: 1, duration: 0.2 })
+        .to('.canvas-container', { opacity: 1, duration: 1.2, ease: "power2.out" }, "-=0.2")
+        .from('.navbar-item', { y: -20, opacity: 0, stagger: 0.05, duration: 0.6, ease: "back.out(1.5)" }, "-=1.0")
+        .from('.stagger-text', { y: 40, scale: 0.95, opacity: 0, stagger: 0.1, duration: 1, ease: "power4.out" }, "-=0.8");
         
-        if (progress < 1) requestAnimationFrame(animate);
-      };
-      
-      requestAnimationFrame(animate);
-    }
-  }, [isInView, stat.value]);
+    }, containerRef);
+    
+    return () => ctx.revert();
+  }, []);
 
   return (
-    <div ref={ref} className="text-center">
-      <div className="text-3xl sm:text-4xl font-bold gradient-text mb-1">
-        {count.toLocaleString()}{stat.suffix}
+    <div 
+      ref={containerRef}
+      className="landing-wrapper relative w-full min-h-screen overflow-x-hidden font-sans bg-grid-texture"
+      style={{ backgroundColor: '#F8F7F2' }}
+    >
+      <LandingNavbar />
+
+      {/* FIXED 3D Background - stays behind everything during scroll */}
+      <div className="canvas-container fixed inset-0 z-0 pointer-events-none">
+        <Canvas camera={{ position: [0, 0, 10], fov: 45 }}>
+          <ambientLight intensity={1.5} />
+          <directionalLight position={[5, 5, 5]} intensity={2.5} />
+          <PCBBoard />
+          <SolderingIron />
+          <MouseParallax />
+        </Canvas>
       </div>
-      <div className="text-sm text-text-muted">{stat.label}</div>
+
+      {/* Hero Section Container */}
+      <main className="relative z-10 w-full h-screen flex flex-col items-center justify-center px-4 pointer-events-none">
+        <div className="flex flex-col items-center text-center max-w-[900px] mt-12">
+          {/* Headline */}
+          <h1 className="stagger-text text-[4.5rem] leading-[1.1] font-bold text-[#111] mb-6 tracking-tight pointer-events-auto">
+            The Community{' '}
+            <span 
+              className="inline-block relative px-4 py-1 mx-1 rounded-[20px]"
+              style={{ backgroundColor: '#E0D2EC' }}
+            >
+              Hardware
+            </span>
+            <br className="hidden sm:block" />
+            & Skill Exchange
+          </h1>
+
+          {/* Sub-headline */}
+          <p className="stagger-text text-[1.35rem] text-[#333] max-w-3xl mx-auto mb-12 leading-[1.6] font-medium px-4 pointer-events-auto">
+            Your platform to exchange expertise, access hardware, and build<br className="hidden md:block" />
+            complex projects. Collaborate and grow with your community.
+          </p>
+
+          {/* CTAs */}
+          <div className="stagger-text flex flex-col sm:flex-row items-center justify-center gap-5 w-full pointer-events-auto">
+            <Link to="/dashboard" className="w-full sm:w-auto hover:opacity-90 transition-opacity">
+              <button 
+                className="w-full sm:w-auto px-10 py-4 rounded-[20px] font-semibold text-lg flex items-center justify-center gap-2"
+                style={{ 
+                  backgroundColor: '#8A6fa8', 
+                  color: 'white',
+                  border: '1px solid rgba(255,255,255,0.2)',
+                  boxShadow: '0 10px 25px rgba(138, 111, 168, 0.3)'
+                }}
+              >
+                Start Building 
+                <span className="text-xl leading-none ml-1">→</span>
+              </button>
+            </Link>
+            <Link to="/registry" className="w-full sm:w-auto hover:opacity-90 transition-opacity">
+              <button 
+                className="w-full sm:w-auto px-10 py-4 rounded-[20px] font-semibold text-lg box-border"
+                style={{ 
+                  backgroundColor: '#201f1d', 
+                  color: 'white',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  boxShadow: '0 10px 25px rgba(0, 0, 0, 0.2)'
+                }}
+              >
+                Explore Registry
+              </button>
+            </Link>
+          </div>
+
+          {/* Bottom Trust Badge */}
+          <div className="stagger-text mt-12 text-[1.05rem] text-[#222] font-medium flex items-center gap-2 pointer-events-auto">
+            Works without sign-up in development mode 
+            <span className="text-green-600 font-bold ml-1">✓</span>
+          </div>
+        </div>
+      </main>
+
+      {/* Informational Scroll Sections */}
+      <FeaturesSection />
+      <HowItWorksSection />
+      <StatsSection />
+      <Footer />
+      
     </div>
   );
 };

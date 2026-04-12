@@ -3,74 +3,29 @@ import { Link } from 'react-router-dom';
 
 const Footer: React.FC = () => {
   return (
-    <footer className="border-t border-border-default bg-bg-secondary/50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-          {/* Brand */}
-          <div className="md:col-span-2">
-            <Link to="/" className="flex items-center gap-2 mb-3">
-              <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-accent-indigo to-accent-violet flex items-center justify-center">
-                <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-              </div>
-              <span className="text-base font-bold gradient-text">OmniPool</span>
-            </Link>
-            <p className="text-sm text-text-muted max-w-xs leading-relaxed">
-              The community-powered platform for sharing hardware resources and finding expert mentors — powered by AI.
-            </p>
-          </div>
-
-          {/* Links */}
-          <div>
-            <h4 className="text-sm font-semibold text-text-primary mb-3">Platform</h4>
-            <ul className="space-y-2">
-              {[
-                { to: '/dashboard', label: 'Dashboard' },
-                { to: '/hardware', label: 'Hardware Registry' },
-                { to: '/skills', label: 'Skills Profile' },
-              ].map((link) => (
-                <li key={link.to}>
-                  <Link
-                    to={link.to}
-                    className="text-sm text-text-muted hover:text-accent-indigo transition-colors"
-                  >
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <div>
-            <h4 className="text-sm font-semibold text-text-primary mb-3">Resources</h4>
-            <ul className="space-y-2">
-              {['Documentation', 'API Reference', 'Community'].map((item) => (
-                <li key={item}>
-                  <span className="text-sm text-text-muted hover:text-accent-indigo transition-colors cursor-pointer">
-                    {item}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
-
-        <div className="border-t border-border-default mt-8 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3">
-          <p className="text-xs text-text-muted">
-            © {new Date().getFullYear()} OmniPool. Built with ❤️ for makers.
+    <footer className="relative z-10 bg-bg-primary pt-12 pb-8 px-4 border-t border-border-default">
+      <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
+        <div className="flex flex-col items-center md:items-start">
+          <div className="text-2xl font-bold tracking-tight text-text-primary mb-2">OmniPool</div>
+          <p className="text-sm text-text-muted max-w-xs text-center md:text-left leading-relaxed">
+             The community-powered platform for sharing hardware and finding expert mentors.
           </p>
-          <div className="flex gap-4">
-            {['GitHub', 'Discord', 'Twitter'].map((social) => (
-              <span
-                key={social}
-                className="text-xs text-text-muted hover:text-accent-indigo transition-colors cursor-pointer"
-              >
-                {social}
-              </span>
-            ))}
-          </div>
         </div>
+        
+        <div className="flex flex-wrap justify-center gap-8 text-sm font-medium text-text-secondary">
+           <Link to="/dashboard" className="hover:text-text-primary transition-colors">Platform</Link>
+           <span className="hover:text-text-primary transition-colors cursor-pointer">Resources</span>
+           <span className="hover:text-text-primary transition-colors cursor-pointer">Community</span>
+           <span className="hover:text-text-primary transition-colors cursor-pointer">GitHub</span>
+        </div>
+      </div>
+      
+      <div className="max-w-6xl mx-auto mt-12 pt-8 border-t border-black/5 flex flex-col sm:flex-row justify-between items-center text-xs text-text-muted gap-4">
+         <span>© {new Date().getFullYear()} OmniPool. Built with ❤️ for makers.</span>
+         <div className="flex gap-4">
+           <span className="cursor-pointer hover:text-text-primary">Privacy</span>
+           <span className="cursor-pointer hover:text-text-primary">Terms</span>
+         </div>
       </div>
     </footer>
   );

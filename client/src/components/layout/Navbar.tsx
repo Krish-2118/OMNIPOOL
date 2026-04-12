@@ -16,7 +16,7 @@ const Navbar: React.FC = () => {
   const isActive = (path: string) => location.pathname === path;
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-40 glass border-b border-border-default">
+    <nav className="fixed top-0 left-0 right-0 z-40 bg-white/70 backdrop-blur-xl border-b border-border-default">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
@@ -27,7 +27,7 @@ const Navbar: React.FC = () => {
                   d="M13 10V3L4 14h7v7l9-11h-7z" />
               </svg>
             </div>
-            <span className="text-lg font-bold gradient-text">OmniPool</span>
+            <span className="text-lg font-bold text-text-primary">OmniPool</span>
           </Link>
 
           {/* Desktop Links */}
@@ -39,8 +39,8 @@ const Navbar: React.FC = () => {
                 className={`
                   px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200
                   ${isActive(link.path)
-                    ? 'bg-accent-indigo/15 text-accent-indigo'
-                    : 'text-text-secondary hover:text-text-primary hover:bg-bg-glass'
+                    ? 'bg-accent-indigo/10 text-accent-indigo'
+                    : 'text-text-secondary hover:text-text-primary hover:bg-bg-secondary/60'
                   }
                 `}
               >
@@ -54,7 +54,7 @@ const Navbar: React.FC = () => {
             <Link to="/signin" className="text-sm font-medium text-text-secondary hover:text-text-primary transition-colors">
               Sign In
             </Link>
-            <Link to="/signup" className="px-4 py-2 rounded-lg text-sm font-medium bg-gradient-to-r from-accent-indigo to-accent-violet text-white hover:shadow-glow-sm transition-all duration-200">
+            <Link to="/signup" className="px-5 py-2 rounded-xl text-sm font-medium bg-accent-indigo text-white hover:bg-accent-violet hover:shadow-glow-sm transition-all duration-200">
               Sign Up
             </Link>
           </div>
@@ -78,7 +78,7 @@ const Navbar: React.FC = () => {
 
       {/* Mobile Menu */}
       {isMobileOpen && (
-        <div className="md:hidden border-t border-border-default bg-bg-secondary/95 backdrop-blur-xl animate-fade-in">
+        <div className="md:hidden border-t border-border-default bg-white/95 backdrop-blur-xl animate-fade-in">
           <div className="px-4 py-3 space-y-1">
             {navLinks.map((link) => (
               <Link
@@ -88,8 +88,8 @@ const Navbar: React.FC = () => {
                 className={`
                   block px-4 py-2.5 rounded-lg text-sm font-medium transition-all
                   ${isActive(link.path)
-                    ? 'bg-accent-indigo/15 text-accent-indigo'
-                    : 'text-text-secondary hover:text-text-primary hover:bg-bg-glass'
+                    ? 'bg-accent-indigo/10 text-accent-indigo'
+                    : 'text-text-secondary hover:text-text-primary hover:bg-bg-secondary'
                   }
                 `}
               >
@@ -98,10 +98,10 @@ const Navbar: React.FC = () => {
             ))}
             
             <div className="border-t border-border-default/50 mt-2 pt-2 flex flex-col gap-2">
-              <Link to="/signin" onClick={() => setIsMobileOpen(false)} className="block px-4 py-2.5 rounded-lg text-sm font-medium text-text-secondary hover:text-text-primary hover:bg-bg-glass transition-all text-center">
+              <Link to="/signin" onClick={() => setIsMobileOpen(false)} className="block px-4 py-2.5 rounded-lg text-sm font-medium text-text-secondary hover:text-text-primary hover:bg-bg-secondary transition-all text-center">
                 Sign In
               </Link>
-              <Link to="/signup" onClick={() => setIsMobileOpen(false)} className="block px-4 py-2.5 rounded-lg text-sm font-medium bg-gradient-to-r from-accent-indigo to-accent-violet text-white text-center">
+              <Link to="/signup" onClick={() => setIsMobileOpen(false)} className="block px-4 py-2.5 rounded-lg text-sm font-medium bg-accent-indigo text-white text-center">
                 Sign Up
               </Link>
             </div>
