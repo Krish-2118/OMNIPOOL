@@ -13,8 +13,8 @@ const initGemini = () => {
   }
 
   genAI = new GoogleGenerativeAI(apiKey);
-  model = genAI.getGenerativeModel({ model: 'gemini-1.5-pro' });
-  embeddingModel = genAI.getGenerativeModel({ model: 'text-embedding-004' });
+  model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+  embeddingModel = genAI.getGenerativeModel({ model: 'gemini-embedding-001' });
 
   console.log('✅ Gemini AI client initialized');
   return { genAI, model, embeddingModel };
