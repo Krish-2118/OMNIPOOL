@@ -1,16 +1,8 @@
-const { parseProjectDescription } = require("../services/gemini.service");
-const { generateEmbedding } = require("../services/embedding.service");
-const {
-  searchHardware,
-  searchMentors,
-} = require("../services/vectorSearch.service");
-const {
-  getMockHardwareMatches,
-  getMockMentorMatches,
-} = require("../utils/mockData");
-const { isGeminiConfigured } = require("../config/gemini");
-const ProjectRequest = require("../models/ProjectRequest");
-const User = require("../models/User");
+const { parseProjectDescription, generateProjectAdvice } = require('../services/gemini.service');
+const { generateEmbedding } = require('../services/embedding.service');
+const { searchHardware, searchMentors } = require('../services/vectorSearch.service');
+const { isGeminiConfigured } = require('../config/gemini');
+const ProjectRequest = require('../models/ProjectRequest');
 
 /**
  * POST /api/ai/parse-project
@@ -23,25 +15,28 @@ const parseProject = async (req, res, next) => {
     if (!raw_description || raw_description.trim().length === 0) {
       return res.status(400).json({
         success: false,
-        error: "raw_description is required",
+        error: 'raw_description is required',
       });
     }
 
     const result = await parseProjectDescription(raw_description);
 
-    const user = await User.findOne({ firebaseUid: req.firebaseUid });
-    if (!user) {
-      return res.status(401).json({ success: false, error: "Unauthorized" });
+    // Optionally save as a draft project
+    let project = null;
+    try {
+      if (req.userId) {
+        project = await ProjectRequest.create({
+          title: result.title || 'Untitled Project',
+          raw_description,
+          user_id: req.userId,
+          extrapolated_BOM: result.extrapolated_BOM,
+          required_skills: result.required_skills,
+          status: 'parsed',
+        });
+      }
+    } catch (dbError) {
+      console.warn('Could not save project request to DB:', dbError.message);
     }
-
-    const project = await ProjectRequest.create({
-      title: result.title || "Untitled Project",
-      raw_description,
-      user_id: user._id,
-      extrapolated_BOM: result.extrapolated_BOM,
-      required_skills: result.required_skills,
-      status: "parsed",
-    });
 
     res.status(200).json({
       success: true,
@@ -66,34 +61,31 @@ const matchResources = async (req, res, next) => {
     if (!extrapolated_BOM && !required_skills) {
       return res.status(400).json({
         success: false,
-        error: "extrapolated_BOM or required_skills is required",
+        error: 'extrapolated_BOM or required_skills is required',
       });
     }
 
     let matchedHardware = [];
     let matchedMentors = [];
 
-    if (isGeminiConfigured()) {
-      // Generate embeddings and search
+    // Generate embeddings and search
+    try {
       if (extrapolated_BOM && extrapolated_BOM.length > 0) {
-        const bomText = extrapolated_BOM.map((b) => b.hardware_name).join(", ");
+        const bomText = extrapolated_BOM.map((b) => b.hardware_name).join(', ');
         const bomEmbedding = await generateEmbedding(bomText);
-        matchedHardware = await searchHardware(bomEmbedding, {
-          availability_status: "available",
-        });
+        matchedHardware = await searchHardware(bomEmbedding, { availability_status: 'available' });
       }
 
       if (required_skills && required_skills.length > 0) {
-        const skillsText = required_skills.join(", ");
+        const skillsText = required_skills.join(', ');
         const skillsEmbedding = await generateEmbedding(skillsText);
-        matchedMentors = await searchMentors(skillsEmbedding, {
-          availability: true,
-        });
+        matchedMentors = await searchMentors(skillsEmbedding, { availability: true });
       }
-    } else {
-      // Mock responses
-      matchedHardware = getMockHardwareMatches();
-      matchedMentors = getMockMentorMatches();
+    } catch (dbError) {
+      console.warn('Resource matching failed due to DB issue:', dbError.message);
+      // Fallback to empty results to allow advice generation to proceed
+      matchedHardware = matchedHardware || [];
+      matchedMentors = matchedMentors || [];
     }
 
     res.status(200).json({
@@ -108,4 +100,34 @@ const matchResources = async (req, res, next) => {
   }
 };
 
-module.exports = { parseProject, matchResources };
+/**
+ * POST /api/ai/get-advice
+ * Grounded generation: Takes raw description and matched resources to give advice.
+ */
+const getAdvice = async (req, res, next) => {
+  try {
+    const { raw_description, matched_hardware, matched_mentors } = req.body;
+
+    if (!raw_description) {
+      return res.status(400).json({
+        success: false,
+        error: 'raw_description is required',
+      });
+    }
+
+    const advice = await generateProjectAdvice(
+      raw_description,
+      matched_hardware || [],
+      matched_mentors || []
+    );
+
+    res.status(200).json({
+      success: true,
+      data: advice,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+module.exports = { parseProject, matchResources, getAdvice };

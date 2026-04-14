@@ -1,5 +1,7 @@
-const User = require("../models/User");
-const { generateAverageEmbedding } = require("../services/embedding.service");
+const User = require('../models/User');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const { generateAverageEmbedding } = require('../services/embedding.service');
 
 /**
  * GET /api/users
@@ -7,7 +9,7 @@ const { generateAverageEmbedding } = require("../services/embedding.service");
 const getUsers = async (req, res, next) => {
   try {
     const users = await User.find()
-      .select("-skills_embedding")
+      .select('-password -skills_embedding')
       .sort({ createdAt: -1 })
       .limit(50);
     res.json({ success: true, data: users });
@@ -17,69 +19,50 @@ const getUsers = async (req, res, next) => {
 };
 
 /**
- * POST /api/users/sync
+ * POST /api/users (Register)
  */
-const syncUser = async (req, res, next) => {
+const createUser = async (req, res, next) => {
   try {
-    const firebaseUid = req.firebaseUid;
-    const tokenPayload = req.firebaseToken || {};
-    const email = (tokenPayload.email || "").toLowerCase();
-    const incomingName = (tokenPayload.name || req.body?.name || "").trim();
+    const { name, email, password, skills, bio, location } = req.body;
 
-    if (!firebaseUid || !email) {
-      return res
-        .status(400)
-        .json({ success: false, error: "Missing Firebase user metadata" });
+    // Hash password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    // Generate skills embedding
+    let skills_embedding = [];
+    if (skills && skills.length > 0) {
+      skills_embedding = await generateAverageEmbedding(skills);
     }
 
-    const existing = await User.findOne({
-      $or: [{ firebaseUid }, { email }],
+    const user = await User.create({
+      name,
+      email,
+      password: hashedPassword,
+      skills: skills || [],
+      skills_embedding,
+      bio: bio || '',
+      location: location || { type: 'Point', coordinates: [0, 0] },
     });
 
-    let user;
+    // Generate JWT
+    const token = jwt.sign(
+      { id: user._id },
+      process.env.JWT_SECRET || 'dev-secret',
+      { expiresIn: '7d' }
+    );
 
-    if (existing) {
-      if (existing.firebaseUid !== firebaseUid) {
-        existing.firebaseUid = firebaseUid;
-      }
-
-      if (existing.email !== email) {
-        existing.email = email;
-      }
-
-      if (!existing.name && incomingName) {
-        existing.name = incomingName;
-      }
-
-      user = await existing.save();
-    } else {
-      user = await User.create({
-        firebaseUid,
-        email,
-        name: incomingName || email.split("@")[0],
-        skills: [],
-        skills_embedding: [],
-        bio: "",
-        project_history: [],
-        location: { type: "Point", coordinates: [0, 0] },
-        avatar_url: "",
-        availability: true,
-      });
-    }
-
-    res.status(200).json({
+    res.status(201).json({
       success: true,
-      data: user,
+      data: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        skills: user.skills,
+        token,
+      },
     });
   } catch (error) {
-    if (error?.code === 11000 && error?.keyPattern?.email) {
-      return res.status(409).json({
-        success: false,
-        error:
-          "A profile with this email already exists. Sign in with the original provider, then link Google or password from Firebase.",
-      });
-    }
-
     next(error);
   }
 };
@@ -90,10 +73,10 @@ const syncUser = async (req, res, next) => {
 const getUserById = async (req, res, next) => {
   try {
     const user = await User.findById(req.params.id)
-      .select("-skills_embedding")
-      .populate("project_history");
+      .select('-password -skills_embedding')
+      .populate('project_history');
     if (!user) {
-      return res.status(404).json({ success: false, error: "User not found" });
+      return res.status(404).json({ success: false, error: 'User not found' });
     }
     res.json({ success: true, data: user });
   } catch (error) {
@@ -106,15 +89,6 @@ const getUserById = async (req, res, next) => {
  */
 const updateUser = async (req, res, next) => {
   try {
-    const currentUser = await User.findOne({ firebaseUid: req.firebaseUid });
-    if (!currentUser) {
-      return res.status(401).json({ success: false, error: "Unauthorized" });
-    }
-
-    if (currentUser._id.toString() !== req.params.id) {
-      return res.status(403).json({ success: false, error: "Forbidden" });
-    }
-
     const { name, skills, bio, availability, location } = req.body;
     const updateData = {};
 
@@ -131,10 +105,10 @@ const updateUser = async (req, res, next) => {
     const user = await User.findByIdAndUpdate(req.params.id, updateData, {
       new: true,
       runValidators: true,
-    }).select("-skills_embedding");
+    }).select('-password -skills_embedding');
 
     if (!user) {
-      return res.status(404).json({ success: false, error: "User not found" });
+      return res.status(404).json({ success: false, error: 'User not found' });
     }
 
     res.json({ success: true, data: user });
@@ -143,4 +117,4 @@ const updateUser = async (req, res, next) => {
   }
 };
 
-module.exports = { getUsers, syncUser, getUserById, updateUser };
+module.exports = { getUsers, createUser, getUserById, updateUser };

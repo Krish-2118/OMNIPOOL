@@ -1,4 +1,4 @@
-import { create } from "zustand";
+import { create } from 'zustand';
 
 export interface BOMItem {
   hardware_name: string;
@@ -46,20 +46,10 @@ export interface HardwareItem {
   image_url: string;
 }
 
-export interface AppUser {
-  _id: string;
-  firebaseUid: string;
-  name: string;
-  email: string;
-  skills: string[];
-  bio?: string;
-  availability?: boolean;
-}
-
 interface AppState {
   // Auth
-  user: AppUser | null;
-  setUser: (user: AppState["user"]) => void;
+  user: { _id: string; name: string; email: string; skills: string[]; token: string } | null;
+  setUser: (user: AppState['user']) => void;
   logout: () => void;
 
   // AI Parse
@@ -88,8 +78,8 @@ interface AppState {
 const useStore = create<AppState>((set) => ({
   // Auth
   user: null,
-  setUser: (user) => set({ user, userSkills: user?.skills || [] }),
-  logout: () => set({ user: null, userSkills: [], myHardware: [] }),
+  setUser: (user) => set({ user }),
+  logout: () => set({ user: null }),
 
   // AI Parse
   parseResult: null,

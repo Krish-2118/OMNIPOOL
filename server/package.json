@@ -8,13 +8,19 @@
     "start": "node src/index.js"
   },
   "dependencies": {
+    "@genkit-ai/google-genai": "^1.32.0",
+    "@genkit-ai/googleai": "^1.28.0",
     "@google/generative-ai": "^0.21.0",
+    "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
+    "genkit": "^1.32.0",
+    "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.9.5",
     "morgan": "^1.10.0",
-    "firebase-admin": "^13.4.0"
+    "z": "^1.0.9",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "nodemon": "^3.1.9"

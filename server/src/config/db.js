@@ -1,8 +1,4 @@
 const mongoose = require('mongoose');
-const dns = require('dns');
-
-// Use Google DNS to avoid local DNS SRV resolution failures
-dns.setServers(['8.8.8.8', '8.8.4.4']);
 
 const connectDB = async () => {
   try {
@@ -16,7 +12,7 @@ const connectDB = async () => {
     console.log(`✅ MongoDB connected: ${conn.connection.host}`);
   } catch (error) {
     console.error(`❌ MongoDB connection error: ${error.message}`);
-    console.warn('⚠️  Server will continue running without database. DB-dependent routes will fail.');
+    console.warn('⚠️  Server will continue running without database connectivity.');
   }
 };
 

@@ -6,14 +6,9 @@ const { isGeminiConfigured } = require('../config/gemini');
  * Uses Gemini's text-embedding-004 model.
  */
 const generateEmbedding = async (text) => {
-  if (!isGeminiConfigured()) {
-    // Return a mock 768-dim zero vector
-    return new Array(768).fill(0);
-  }
-
   try {
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-    const model = genAI.getGenerativeModel({ model: 'text-embedding-004' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-embedding-001' });
 
     const result = await model.embedContent(text);
     return result.embedding.values;
