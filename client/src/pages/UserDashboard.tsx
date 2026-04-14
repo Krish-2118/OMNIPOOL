@@ -239,7 +239,7 @@ const DashboardContent = () => {
                         </div>
                         <div className="flex flex-col">
                           <span className="text-sm font-medium text-text-primary">{mentor.name}</span>
-                          <span className="text-xs text-text-muted truncate">{mentor.expertise.slice(0,2).join(', ')}</span>
+                          <span className="text-xs text-text-muted truncate">{(mentor.expertise ?? (mentor as any).skills ?? []).slice(0,2).join(', ')}</span>
                         </div>
                       </li>
                     )) : (

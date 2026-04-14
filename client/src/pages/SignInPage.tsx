@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { Link, Navigate, useLocation } from "react-router-dom";
+import { ArrowLeft, Eye, EyeOff } from "lucide-react";
 import {
   fetchSignInMethodsForEmail,
   signInWithEmailAndPassword,
   signInWithPopup,
   sendPasswordResetEmail,
 } from "firebase/auth";
-import { Eye, EyeOff } from "lucide-react";
+
 import { auth, googleProvider } from "../config/firebase";
 import useStore from "../store/useStore";
 import { useAuth } from "../context/AuthContext";
@@ -132,6 +133,13 @@ const SignInPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-gradient-hero flex items-center justify-center px-4 py-10">
       <div className="w-full max-w-md glass-card p-8">
+        <Link
+          to="/"
+          className="inline-flex items-center gap-1.5 text-sm text-text-muted hover:text-text-primary transition-colors mb-6 group"
+        >
+          <ArrowLeft size={16} className="group-hover:-translate-x-0.5 transition-transform" />
+          Back to Home
+        </Link>
         <h1 className="text-2xl font-bold text-text-primary mb-2">
           Sign in to OmniPool
         </h1>

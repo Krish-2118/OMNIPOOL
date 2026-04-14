@@ -20,7 +20,8 @@ const auth = async (req, res, next) => {
     req.firebaseToken = decoded;
     next();
   } catch (error) {
-    return res.status(401).json({ success: false, error: "Unauthorized" });
+    console.error("Firebase auth error:", error.message);
+    return res.status(401).json({ success: false, error: "Unauthorized", message: error.message });
   }
 };
 

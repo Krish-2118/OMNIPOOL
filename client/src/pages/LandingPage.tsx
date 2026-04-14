@@ -7,6 +7,8 @@ import { useMemo } from "react";
 import * as THREE from "three";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import useStore from "../store/useStore";
+import { useAuth } from "../context/AuthContext";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -171,6 +173,9 @@ const MouseParallax = () => {
 
 // --- Custom Navbar ---
 const LandingNavbar = () => {
+  const user = useStore((state) => state.user);
+  const { isAuthLoading } = useAuth();
+
   return (
     <nav className="absolute top-0 left-0 w-full z-50 px-10 py-8 flex items-center justify-between pointer-events-auto">
       <div className="text-3xl font-bold tracking-tight text-[#1A1A1A]">
@@ -200,18 +205,29 @@ const LandingNavbar = () => {
         </Link>
       </div>
       <div className="flex items-center gap-8 text-[1.05rem] font-medium">
-        <Link
-          to="/signin"
-          className="text-[#4A4A4A] hover:text-[#1A1A1A] transition-colors"
-        >
-          Sign In
-        </Link>
-        <Link
-          to="/signup"
-          className="bg-[#8C7B9E] text-white px-7 py-3 rounded-2xl hover:bg-opacity-90 transition-all shadow-sm"
-        >
-          Sign Up
-        </Link>
+        {!isAuthLoading && user ? (
+          <Link
+            to="/dashboard"
+            className="bg-[#8C7B9E] text-white px-7 py-3 rounded-2xl hover:bg-opacity-90 transition-all shadow-sm"
+          >
+            Go to Dashboard
+          </Link>
+        ) : (
+          <>
+            <Link
+              to="/signin"
+              className="text-[#4A4A4A] hover:text-[#1A1A1A] transition-colors"
+            >
+              Sign In
+            </Link>
+            <Link
+              to="/signup"
+              className="bg-[#8C7B9E] text-white px-7 py-3 rounded-2xl hover:bg-opacity-90 transition-all shadow-sm"
+            >
+              Sign Up
+            </Link>
+          </>
+        )}
       </div>
     </nav>
   );
