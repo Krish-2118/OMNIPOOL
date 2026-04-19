@@ -5,7 +5,9 @@
   "main": "src/index.js",
   "scripts": {
     "dev": "nodemon src/index.js",
-    "start": "node src/index.js"
+    "start": "node src/index.js",
+    "build": "node -e \"console.log('No server build step')\"",
+    "set-role": "node scripts/set-user-role.js"
   },
   "dependencies": {
     "@genkit-ai/google-genai": "^1.32.0",
@@ -19,6 +21,7 @@
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.9.5",
     "morgan": "^1.10.0",
+    "socket.io": "^4.8.3",
     "z": "^1.0.9",
     "zod": "^4.3.6"
   },

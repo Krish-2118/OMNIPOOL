@@ -43,7 +43,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
 
         try {
           const { data } = await syncUser({
+            firebaseUid: currentUser.uid,
+            email: currentUser.email || "",
             name: currentUser.displayName || undefined,
+            avatar_url: currentUser.photoURL || undefined,
           });
           setUser(data.data);
         } catch (error) {

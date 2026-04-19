@@ -1,7 +1,23 @@
-const User = require('../models/User');
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
-const { generateAverageEmbedding } = require('../services/embedding.service');
+const User = require("../models/User");
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
+const { generateAverageEmbedding } = require("../services/embedding.service");
+
+const buildAuthUserResponse = (user, token) => ({
+  _id: user._id,
+  name: user.name,
+  email: user.email,
+  firebaseUid: user.firebaseUid,
+  skills: user.skills,
+  avatar_url: user.avatar_url,
+  role: user.role,
+  account_type: user.account_type,
+  enterprise_status: user.enterprise_status,
+  company_name: user.company_name,
+  company_website: user.company_website,
+  gst_number: user.gst_number,
+  token,
+});
 
 /**
  * GET /api/users
@@ -9,7 +25,7 @@ const { generateAverageEmbedding } = require('../services/embedding.service');
 const getUsers = async (req, res, next) => {
   try {
     const users = await User.find()
-      .select('-password -skills_embedding')
+      .select("-password -skills_embedding")
       .sort({ createdAt: -1 })
       .limit(50);
     res.json({ success: true, data: users });
@@ -23,7 +39,8 @@ const getUsers = async (req, res, next) => {
  */
 const createUser = async (req, res, next) => {
   try {
-    const { name, email, password, skills, bio, location } = req.body;
+    const { name, email, password, skills, bio, location, firebaseUid } =
+      req.body;
 
     // Hash password
     const salt = await bcrypt.genSalt(10);
@@ -38,29 +55,172 @@ const createUser = async (req, res, next) => {
     const user = await User.create({
       name,
       email,
+      firebaseUid: firebaseUid || email,
       password: hashedPassword,
       skills: skills || [],
       skills_embedding,
-      bio: bio || '',
-      location: location || { type: 'Point', coordinates: [0, 0] },
+      bio: bio || "",
+      location: location || { type: "Point", coordinates: [0, 0] },
     });
 
     // Generate JWT
     const token = jwt.sign(
       { id: user._id },
-      process.env.JWT_SECRET || 'dev-secret',
-      { expiresIn: '7d' }
+      process.env.JWT_SECRET || "dev-secret",
+      { expiresIn: "7d" },
     );
 
     res.status(201).json({
       success: true,
-      data: {
-        _id: user._id,
-        name: user.name,
-        email: user.email,
-        skills: user.skills,
-        token,
-      },
+      data: buildAuthUserResponse(user, token),
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * POST /api/users/login
+ */
+const loginUser = async (req, res, next) => {
+  try {
+    const { email, password } = req.body;
+
+    const user = await User.findOne({ email }).select("+password");
+    if (!user) {
+      return res
+        .status(401)
+        .json({ success: false, error: "Invalid credentials" });
+    }
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res
+        .status(401)
+        .json({ success: false, error: "Invalid credentials" });
+    }
+
+    const token = jwt.sign(
+      { id: user._id },
+      process.env.JWT_SECRET || "dev-secret",
+      { expiresIn: "7d" },
+    );
+
+    res.json({
+      success: true,
+      data: buildAuthUserResponse(user, token),
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * POST /api/users/google
+ * Handle Firebase Google login automatically registering if unknown
+ */
+const googleAuth = async (req, res, next) => {
+  try {
+    const { email, name, avatar_url, firebaseUid } = req.body;
+
+    if (!email) {
+      return res
+        .status(400)
+        .json({ success: false, error: "Email is required for Google Auth" });
+    }
+
+    let user = await User.findOne({ email });
+
+    if (!user) {
+      // Auto-register using random password since it's a required field in schema
+      const randomPassword =
+        Math.random().toString(36).slice(-10) +
+        Math.random().toString(36).toUpperCase().slice(-5) +
+        "!";
+      const salt = await bcrypt.genSalt(10);
+      const hashedPassword = await bcrypt.hash(randomPassword, salt);
+
+      user = await User.create({
+        name: name || email.split("@")[0],
+        email,
+        firebaseUid: firebaseUid || email,
+        password: hashedPassword,
+        avatar_url: avatar_url || "",
+      });
+    } else if (firebaseUid && user.firebaseUid !== firebaseUid) {
+      user.firebaseUid = firebaseUid;
+      if (name) user.name = name;
+      if (avatar_url) user.avatar_url = avatar_url;
+      await user.save();
+    }
+
+    const token = jwt.sign(
+      { id: user._id },
+      process.env.JWT_SECRET || "dev-secret",
+      { expiresIn: "7d" },
+    );
+
+    res.json({
+      success: true,
+      data: buildAuthUserResponse(user, token),
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * POST /api/users/sync
+ * Sync a Firebase-authenticated user into MongoDB without duplicate inserts
+ */
+const syncUser = async (req, res, next) => {
+  try {
+    const { firebaseUid, email, name, avatar_url } = req.body;
+
+    if (!firebaseUid || !email) {
+      return res.status(400).json({
+        success: false,
+        error: "firebaseUid and email are required",
+      });
+    }
+
+    const normalizedEmail = String(email).toLowerCase();
+    let user = await User.findOne({
+      $or: [{ firebaseUid }, { email: normalizedEmail }],
+    }).select("+password");
+
+    if (!user) {
+      const randomPassword =
+        Math.random().toString(36).slice(-10) +
+        Math.random().toString(36).toUpperCase().slice(-5) +
+        "!";
+      const salt = await bcrypt.genSalt(10);
+      const hashedPassword = await bcrypt.hash(randomPassword, salt);
+
+      user = await User.create({
+        name: name || normalizedEmail.split("@")[0],
+        email: normalizedEmail,
+        firebaseUid,
+        password: hashedPassword,
+        avatar_url: avatar_url || "",
+      });
+    } else {
+      user.firebaseUid = firebaseUid;
+      user.email = normalizedEmail;
+      if (name) user.name = name;
+      if (avatar_url) user.avatar_url = avatar_url;
+      await user.save();
+    }
+
+    const token = jwt.sign(
+      { id: user._id },
+      process.env.JWT_SECRET || "dev-secret",
+      { expiresIn: "7d" },
+    );
+
+    res.json({
+      success: true,
+      data: buildAuthUserResponse(user, token),
     });
   } catch (error) {
     next(error);
@@ -73,10 +233,10 @@ const createUser = async (req, res, next) => {
 const getUserById = async (req, res, next) => {
   try {
     const user = await User.findById(req.params.id)
-      .select('-password -skills_embedding')
-      .populate('project_history');
+      .select("-password -skills_embedding")
+      .populate("project_history");
     if (!user) {
-      return res.status(404).json({ success: false, error: 'User not found' });
+      return res.status(404).json({ success: false, error: "User not found" });
     }
     res.json({ success: true, data: user });
   } catch (error) {
@@ -105,10 +265,10 @@ const updateUser = async (req, res, next) => {
     const user = await User.findByIdAndUpdate(req.params.id, updateData, {
       new: true,
       runValidators: true,
-    }).select('-password -skills_embedding');
+    }).select("-password -skills_embedding");
 
     if (!user) {
-      return res.status(404).json({ success: false, error: 'User not found' });
+      return res.status(404).json({ success: false, error: "User not found" });
     }
 
     res.json({ success: true, data: user });
@@ -117,4 +277,117 @@ const updateUser = async (req, res, next) => {
   }
 };
 
-module.exports = { getUsers, createUser, getUserById, updateUser };
+/**
+ * GET /api/users/enterprise/applications
+ * Admin only: get all pending enterprise applications
+ */
+const getEnterpriseApplications = async (req, res, next) => {
+  try {
+    if (req.user && req.user.role !== "admin") {
+      return res
+        .status(403)
+        .json({ success: false, error: "Unauthorized: Admin only" });
+    }
+
+    // Default to pending but allow filtering
+    const status = req.query.status || "pending";
+
+    const applications = await User.find({ enterprise_status: status }).select(
+      "-password -skills_embedding",
+    );
+
+    res.json({ success: true, data: applications });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * PUT /api/users/enterprise/:id/status
+ * Admin only: update enterprise application status
+ */
+const updateEnterpriseStatus = async (req, res, next) => {
+  try {
+    if (req.user && req.user.role !== "admin") {
+      return res
+        .status(403)
+        .json({ success: false, error: "Unauthorized: Admin only" });
+    }
+
+    const { status } = req.body;
+    if (!["accepted", "rejected"].includes(status)) {
+      return res
+        .status(400)
+        .json({ success: false, error: "Status must be accepted or rejected" });
+    }
+
+    // If accepted, upgrade account_type to 'enterprise'
+    // If rejected or pending, ensure it drops back to 'community'
+    const account_type = status === "accepted" ? "enterprise" : "community";
+
+    const user = await User.findByIdAndUpdate(
+      req.params.id,
+      {
+        enterprise_status: status,
+        account_type: account_type,
+      },
+      { new: true, runValidators: true },
+    ).select("-password -skills_embedding");
+
+    if (!user) {
+      return res.status(404).json({ success: false, error: "User not found" });
+    }
+
+    res.json({ success: true, data: user });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * POST /api/users/enterprise
+ * Apply for enterprise account
+ */
+const applyEnterprise = async (req, res, next) => {
+  try {
+    const { company_name, company_website, gst_number } = req.body;
+
+    if (!company_name) {
+      return res
+        .status(400)
+        .json({ success: false, error: "Company name is required" });
+    }
+
+    const user = await User.findByIdAndUpdate(
+      req.userId,
+      {
+        enterprise_status: "pending",
+        company_name,
+        company_website: company_website || "",
+        gst_number: gst_number || "",
+      },
+      { new: true, runValidators: true },
+    ).select("-password -skills_embedding");
+
+    if (!user) {
+      return res.status(404).json({ success: false, error: "User not found" });
+    }
+
+    res.json({ success: true, data: user });
+  } catch (error) {
+    next(error);
+  }
+};
+
+module.exports = {
+  getUsers,
+  createUser,
+  loginUser,
+  googleAuth,
+  syncUser,
+  getUserById,
+  updateUser,
+  applyEnterprise,
+  getEnterpriseApplications,
+  updateEnterpriseStatus,
+};

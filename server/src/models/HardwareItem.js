@@ -36,8 +36,37 @@ const hardwareItemSchema = new mongoose.Schema({
   },
   category: {
     type: String,
-    enum: ['compute', 'sensor', 'networking', 'storage', 'display', 'power', 'other'],
+    enum: [
+      'compute', 'sensor', 'networking', 'storage', 'display', 'power', 'other',
+      'microcontrollers', 'development_boards', 'sensors', 'actuators',
+      'passive_components', 'active_ics', 'displays', 'cables_connectors',
+      'power_supply', 'tools',
+    ],
     default: 'other',
+  },
+  sub_category: {
+    type: String,
+    default: '',
+    trim: true,
+  },
+  quantity: {
+    type: Number,
+    default: 1,
+  },
+  owner_type: {
+    type: String,
+    enum: ['community', 'enterprise'],
+    default: 'community',
+  },
+  brand: {
+    type: String,
+    default: '',
+    trim: true,
+  },
+  condition: {
+    type: String,
+    enum: ['new', 'used', 'refurbished'],
+    default: 'new',
   },
   specs: {
     type: Map,

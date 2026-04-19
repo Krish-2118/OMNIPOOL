@@ -52,7 +52,7 @@ const Modal: React.FC<ModalProps> = ({
       {/* Modal content */}
       <div
         className={`
-          relative w-full ${sizes[size]} glass-card p-0 overflow-hidden
+          relative w-full ${sizes[size]} max-h-[90vh] flex flex-col glass-card p-0 overflow-hidden
           animate-fade-in-up
         `}
       >
@@ -70,7 +70,7 @@ const Modal: React.FC<ModalProps> = ({
             </button>
           </div>
         )}
-        <div className="p-6">{children}</div>
+        <div className="p-6 overflow-y-auto">{children}</div>
       </div>
     </div>
   );
