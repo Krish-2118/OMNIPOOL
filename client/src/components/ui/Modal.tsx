@@ -52,12 +52,12 @@ const Modal: React.FC<ModalProps> = ({
       {/* Modal content */}
       <div
         className={`
-          relative w-full ${sizes[size]} max-h-[90vh] flex flex-col glass-card p-0 overflow-hidden
+          relative w-full ${sizes[size]} max-h-[90vh] flex flex-col bg-white border border-border-default/50 rounded-2xl shadow-xl shadow-black-[0.04] p-0 overflow-hidden
           animate-fade-in-up
         `}
       >
         {title && (
-          <div className="flex items-center justify-between px-6 py-4 border-b border-border-default">
+          <div className="flex items-center justify-between px-6 py-5 border-b border-border-default/50 bg-[#fafafa]">
             <h3 className="text-lg font-semibold text-text-primary">{title}</h3>
             <button
               onClick={onClose}

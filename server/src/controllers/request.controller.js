@@ -188,32 +188,43 @@ const updateRequest = async (req, res, next) => {
           error: "Only accepted requests can be completed",
         });
       }
+      
+      if (isOwner) {
+        request.owner_completed = true;
+      } else {
+        request.requester_completed = true;
+      }
+
+      if (request.owner_completed && request.requester_completed) {
+        request.status = "completed";
+      }
+    } else {
+      // Reduce stock when request is accepted.
+      if (status === "accepted") {
+        const hardware = await HardwareItem.findById(request.hardware_id);
+        if (!hardware) {
+          return res
+            .status(404)
+            .json({ success: false, error: "Hardware not found" });
+        }
+
+        if (hardware.quantity < request.quantity_requested) {
+          return res.status(400).json({
+            success: false,
+            error: "Insufficient quantity available to accept this request",
+          });
+        }
+
+        hardware.quantity -= request.quantity_requested;
+        if (hardware.quantity <= 0) {
+          hardware.availability_status = "in-use";
+        }
+        await hardware.save();
+      }
+
+      request.status = status;
     }
 
-    // Reduce stock when request is accepted.
-    if (status === "accepted") {
-      const hardware = await HardwareItem.findById(request.hardware_id);
-      if (!hardware) {
-        return res
-          .status(404)
-          .json({ success: false, error: "Hardware not found" });
-      }
-
-      if (hardware.quantity < request.quantity_requested) {
-        return res.status(400).json({
-          success: false,
-          error: "Insufficient quantity available to accept this request",
-        });
-      }
-
-      hardware.quantity -= request.quantity_requested;
-      if (hardware.quantity <= 0) {
-        hardware.availability_status = "in-use";
-      }
-      await hardware.save();
-    }
-
-    request.status = status;
     await request.save();
 
     const populated = await HardwareRequest.findById(request._id)

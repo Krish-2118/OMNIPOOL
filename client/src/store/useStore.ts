@@ -108,6 +108,8 @@ export interface HardwareRequest {
   quantity_requested: number;
   message: string;
   status: "pending" | "accepted" | "rejected" | "completed";
+  requester_completed?: boolean;
+  owner_completed?: boolean;
   createdAt: string;
   updatedAt: string;
 }

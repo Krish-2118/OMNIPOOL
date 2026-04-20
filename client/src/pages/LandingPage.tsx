@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import useStore from "../store/useStore";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import Footer from "../components/layout/Footer";
 import { Edges, useGLTF } from "@react-three/drei";
@@ -169,35 +170,11 @@ const MouseParallax = () => {
   return null;
 };
 
-// --- Custom Navbar ---
 const LandingNavbar = () => {
   return (
     <nav className="absolute top-0 left-0 w-full z-50 px-10 py-8 flex items-center justify-between pointer-events-auto">
       <div className="text-3xl font-bold tracking-tight text-[#1A1A1A]">
         OmniPool
-      </div>
-      <div className="hidden md:flex items-center gap-10 text-[1.05rem] font-medium text-[#4A4A4A]">
-        <Link to="/" className="hover:text-[#1A1A1A] transition-colors">
-          Home
-        </Link>
-        <Link
-          to="/dashboard"
-          className="hover:text-[#1A1A1A] transition-colors"
-        >
-          Dashboard
-        </Link>
-        <Link to="/registry" className="hover:text-[#1A1A1A] transition-colors">
-          Registry
-        </Link>
-        <Link to="/skills" className="hover:text-[#1A1A1A] transition-colors">
-          Skills
-        </Link>
-        <Link
-          to="/enterprise"
-          className="hover:text-[#1A1A1A] transition-colors"
-        >
-          Enterprise
-        </Link>
       </div>
       <div className="flex items-center gap-8 text-[1.05rem] font-medium">
         <Link
@@ -448,6 +425,60 @@ const HowItWorksSection = () => {
   );
 };
 
+const EnterpriseSection = () => {
+  return (
+    <section className="relative z-10 py-24 px-4 bg-[#F8F7F2] pointer-events-auto">
+      <div className="max-w-6xl mx-auto">
+        <div className="bg-[#1A1A1A] rounded-[2.5rem] p-8 sm:p-12 md:p-16 relative overflow-hidden group shadow-2xl">
+          {/* Subtle gradient glow inside */}
+          <div className="absolute inset-0 bg-gradient-to-br from-[#8C7B9E]/10 to-transparent pointer-events-none" />
+          <div className="absolute top-0 right-0 p-10 opacity-5 pointer-events-none">
+            <svg width="250" height="250" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="text-white">
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+            </svg>
+          </div>
+
+          <div className="relative z-10 flex flex-col lg:flex-row items-center lg:items-start justify-between gap-12">
+            <div className="flex-1 text-center lg:text-left">
+              <h2 className="text-[2.25rem] sm:text-4xl md:text-5xl font-extrabold text-white mb-6 tracking-tight leading-[1.1] max-w-xl mx-auto lg:mx-0">
+                Turn Dead Inventory <br className="hidden md:block"/> 
+                <span className="text-white/90">into Community Innovation.</span>
+              </h2>
+              <p className="text-white/70 text-lg mb-8 max-w-xl leading-relaxed mx-auto lg:mx-0">
+                OmniPool equips electronic manufacturers and distributors with a seamless platform to donate or list surplus stock, fueling grassroots engineering while hitting corporate ESG targets.
+              </p>
+              
+              <Link to="/enterprise">
+                <button className="px-8 py-4 rounded-full bg-white text-[#1A1A1A] font-bold text-lg hover:bg-[#EAE8E3] hover:scale-105 transition-all shadow-[0_0_20px_rgba(255,255,255,0.15)] flex items-center justify-center gap-2 mx-auto lg:mx-0 w-full sm:w-auto">
+                  Apply for Partnership
+                  <span className="text-xl leading-none">→</span>
+                </button>
+              </Link>
+            </div>
+            
+            <div className="flex-1 w-full flex justify-center lg:justify-end">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-[500px]">
+                <div className="bg-white/5 border border-white/10 p-6 rounded-3xl backdrop-blur-md hover:bg-white/10 transition-colors">
+                  <h4 className="text-white font-bold mb-2 text-lg flex items-center gap-2">👔 Tax-Deductible</h4>
+                  <p className="text-white/50 text-sm leading-relaxed">Automated documentation for hardware transfers to academic organizations for immediate tax write-offs.</p>
+                </div>
+                <div className="bg-white/5 border border-white/10 p-6 rounded-3xl backdrop-blur-md hover:bg-white/10 transition-colors">
+                  <h4 className="text-white font-bold mb-2 text-lg flex items-center gap-2">♻️ ESG Targets</h4>
+                  <p className="text-white/50 text-sm leading-relaxed">Drastically reduce electronic waste by routing functional components to actual developers.</p>
+                </div>
+                <div className="bg-white/5 border border-white/10 p-6 rounded-3xl backdrop-blur-md sm:col-span-2 hover:bg-white/10 transition-colors">
+                  <h4 className="text-white font-bold mb-2 text-lg flex items-center gap-2">🚀 Brand Penetration</h4>
+                  <p className="text-white/50 text-sm leading-relaxed">Build severe goodwill among rising engineers by putting your proprietary components directly in their hands.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+};
+
 const FAQSection = () => {
   const [openIndex, setOpenIndex] = useState<number | null>(null);
 
@@ -525,6 +556,14 @@ const FAQSection = () => {
 // --- Main Landing Page ---
 const LandingPage: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
+  const user = useStore((state) => state.user);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (user) {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [user, navigate]);
 
   useEffect(() => {
     // Top Hero Initial GSAP Load Sequence
@@ -646,17 +685,14 @@ const LandingPage: React.FC = () => {
             </Link>
           </div>
 
-          {/* Bottom Trust Badge */}
-          <div className="stagger-text mt-12 text-[1.05rem] text-[#222] font-medium flex items-center gap-2 pointer-events-auto">
-            Works without sign-up in development mode
-            <span className="text-green-600 font-bold ml-1">✓</span>
-          </div>
+
         </div>
       </main>
 
       {/* Informational Scroll Sections */}
       <FeaturesSection />
       <HowItWorksSection />
+      <EnterpriseSection />
       <FAQSection />
       <Footer />
     </div>

@@ -31,6 +31,14 @@ const hardwareRequestSchema = new mongoose.Schema({
     enum: ['pending', 'accepted', 'rejected', 'completed'],
     default: 'pending',
   },
+  requester_completed: {
+    type: Boolean,
+    default: false,
+  },
+  owner_completed: {
+    type: Boolean,
+    default: false,
+  },
 }, {
   timestamps: true,
 });

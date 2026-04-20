@@ -16,12 +16,11 @@ const Navbar: React.FC = () => {
   };
 
   const navLinks = [
-    { path: "/", label: "Home" },
-    { path: "/dashboard", label: "Dashboard" },
+    { path: "/copilot", label: "AI Copilot" },
     { path: "/registry", label: "Registry" },
-    { path: "/skills", label: "Skills" },
-    { path: "/enterprise", label: "Enterprise" },
     { path: "/chat", label: "Chat" },
+    { path: "/dashboard", label: "Dashboard" },
+    { path: "/enterprise", label: "Enterprise" },
   ];
 
   const isActive = (path: string) => location.pathname === path;
@@ -76,9 +75,6 @@ const Navbar: React.FC = () => {
           <div className="hidden md:flex items-center gap-4 ml-4">
             {user ? (
               <div className="flex items-center gap-4">
-                <span className="text-sm font-medium text-text-primary">
-                  {user.name}
-                </span>
                 <button
                   onClick={handleLogout}
                   className="px-4 py-2 rounded-xl text-sm font-medium bg-bg-secondary text-text-secondary hover:bg-bg-tertiary hover:text-text-primary transition-all duration-200"
@@ -161,9 +157,6 @@ const Navbar: React.FC = () => {
             <div className="border-t border-border-default/50 mt-2 pt-2 flex flex-col gap-2">
               {user ? (
                 <>
-                  <div className="px-4 py-2 text-sm text-text-primary font-medium">
-                    Logged in as {user.name}
-                  </div>
                   <button
                     onClick={handleLogout}
                     className="block w-full text-left px-4 py-2.5 rounded-lg text-sm font-medium text-accent-rose hover:bg-bg-secondary transition-all"

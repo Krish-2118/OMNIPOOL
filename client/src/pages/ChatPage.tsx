@@ -12,6 +12,7 @@ import {
   updateRequestStatus,
 } from "../api/client";
 import { connectSocket, joinChat, sendMessage } from "../api/socket";
+import { MoreHorizontal } from "lucide-react";
 
 const ChatPage: React.FC = () => {
   const { user, conversations, setConversations } = useStore();
@@ -134,7 +135,10 @@ const ChatPage: React.FC = () => {
       forceScrollToBottomRef.current ||
       (hasNewMessages && shouldStickToBottom)
     ) {
-      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+      container.scrollTo({
+        top: container.scrollHeight,
+        behavior: "smooth",
+      });
     }
 
     forceScrollToBottomRef.current = false;
@@ -192,6 +196,8 @@ const ChatPage: React.FC = () => {
             ? {
                 ...c,
                 status: updatedRequest.status ?? c.status,
+                requester_completed: updatedRequest.requester_completed ?? c.requester_completed,
+                owner_completed: updatedRequest.owner_completed ?? c.owner_completed,
                 updatedAt: updatedRequest.updatedAt ?? c.updatedAt,
               }
             : c,
@@ -365,6 +371,8 @@ const ChatPage: React.FC = () => {
           ? {
               ...conv,
               status: updatedConversation.status ?? conv.status,
+              requester_completed: updatedConversation.requester_completed ?? conv.requester_completed,
+              owner_completed: updatedConversation.owner_completed ?? conv.owner_completed,
               updatedAt: updatedConversation.updatedAt ?? conv.updatedAt,
             }
           : conv,
@@ -500,17 +508,21 @@ const ChatPage: React.FC = () => {
     : null;
 
   return (
-    <div className="min-h-screen pt-20 pb-0 flex flex-col bg-bg-primary">
-      <div className="flex-1 flex max-w-7xl mx-auto w-full border-x border-border-default h-[calc(100vh-80px)]">
+    <div className="min-h-screen pt-24 pb-12 px-4 sm:px-8 flex flex-col bg-bg-primary relative">
+      {/* Background decoration */}
+      <div className="absolute top-0 inset-x-0 h-[400px] bg-gradient-to-b from-black/[0.02] to-transparent pointer-events-none z-0" />
+      
+      <div className="relative z-10 flex-1 flex max-w-[1400px] mx-auto w-full border border-border-default/50 rounded-3xl overflow-hidden shadow-2xl shadow-black/[0.03] bg-bg-primary h-[calc(100vh-140px)]">
         {/* Left Sidebar: Conversations List */}
-        <div className="w-1/3 min-w-75 border-r border-border-default bg-bg-secondary/30 flex flex-col">
-          <div className="p-4 border-b border-border-default">
-            <h2 className="text-xl font-bold text-text-primary">Messages</h2>
+        <div className="w-1/3 min-w-[320px] max-w-[400px] border-r border-border-default/50 bg-[#fafafa] flex flex-col">
+          <div className="h-[80px] px-6 border-b border-border-default/50 bg-white/40 backdrop-blur-md z-10 flex flex-col justify-center shrink-0">
+            <h2 className="text-xl font-bold tracking-tight text-text-primary">Inboxes</h2>
+            <p className="text-xs font-medium text-text-muted mt-0.5">Manage hardware requests</p>
           </div>
 
-          <div className="flex-1 overflow-y-auto">
+          <div className="flex-1 overflow-y-auto py-2">
             {conversations.length === 0 ? (
-              <div className="p-8 text-center text-text-muted text-sm">
+              <div className="px-8 py-10 text-center text-text-muted text-sm">
                 No active conversations. Start one by requesting hardware in the
                 Registry.
               </div>
@@ -536,27 +548,28 @@ const ChatPage: React.FC = () => {
                   <button
                     key={conv._id}
                     onClick={() => setActiveConversationId(conv._id)}
-                    className={`w-full text-left p-4 border-b border-border-default/50 hover:bg-bg-tertiary transition-colors flex items-center justify-between ${
+                    className={`w-full text-left mx-3 my-1.5 p-3 rounded-2xl transition-all duration-200 flex items-center justify-between group ${
                       activeConversationId === conv._id
-                        ? "bg-bg-tertiary/80 border-l-4 border-l-accent-indigo"
-                        : ""
+                        ? "bg-white shadow-sm border border-border-default/40"
+                        : "hover:bg-white/60 border border-transparent"
                     }`}
+                    style={{ width: 'calc(100% - 24px)' }}
                   >
                     <div className="flex items-center gap-3 overflow-hidden">
-                      <div className="w-10 h-10 rounded-full bg-accent-indigo text-white flex items-center justify-center font-bold shrink-0">
-                        {contactObject.name?.charAt(0).toUpperCase()}
+                      <div className={`w-12 h-12 rounded-xl text-white flex items-center justify-center font-bold shrink-0 shadow-inner ${activeConversationId === conv._id ? 'bg-gradient-to-br from-accent-indigo to-accent-violet' : 'bg-text-secondary'}`}>
+                        {contactObject.name?.charAt(0).toUpperCase() || '?'}
                       </div>
                       <div className="overflow-hidden">
-                        <div className="font-semibold text-text-primary truncate">
+                        <div className={`font-semibold truncate transition-colors ${activeConversationId === conv._id ? 'text-text-primary' : 'text-text-secondary group-hover:text-text-primary'}`}>
                           {contactObject.name}
                         </div>
-                        <div className="text-xs text-text-muted truncate">
-                          Re: {hwItem.name}
+                        <div className="text-xs text-text-muted truncate mt-0.5">
+                          <span className="font-medium">Ref:</span> {hwItem.name}
                         </div>
                       </div>
                     </div>
                     {conv.unread_count ? (
-                      <div className="bg-accent-rose text-white text-xs font-bold w-5 h-5 flex items-center justify-center rounded-full shrink-0">
+                      <div className="bg-accent-indigo text-white text-xs font-bold w-5 h-5 flex items-center justify-center rounded-full shrink-0 shadow-sm">
                         {conv.unread_count}
                       </div>
                     ) : null}
@@ -568,13 +581,13 @@ const ChatPage: React.FC = () => {
         </div>
 
         {/* Right Area: Chat Window */}
-        <div className="flex-1 flex flex-col bg-bg-primary">
+        <div className="flex-1 flex flex-col bg-bg-primary relative overflow-hidden">
           {activeConversationId && currentConversation ? (
             <>
               {/* Chat Header */}
-              <div className="h-16 border-b border-border-default px-6 flex justify-between items-center bg-bg-secondary/10 shrink-0">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-accent-indigo text-white flex items-center justify-center font-bold">
+              <div className="h-[80px] border-b border-border-default/50 px-8 flex justify-between items-center bg-white/70 backdrop-blur-xl shrink-0 z-20 absolute top-0 inset-x-0">
+                <div className="flex items-center gap-4">
+                  <div className="w-[42px] h-[42px] rounded-xl bg-gradient-to-br from-text-secondary to-text-primary text-white flex items-center justify-center font-bold shadow-sm">
                     {otherUser &&
                     typeof otherUser === "object" &&
                     "name" in otherUser &&
@@ -582,42 +595,42 @@ const ChatPage: React.FC = () => {
                       ? otherUser.name.charAt(0).toUpperCase()
                       : "?"}
                   </div>
-                  <div>
-                    <h3 className="font-semibold text-text-primary truncate">
+                  <div className="flex flex-col justify-center">
+                    <h3 className="font-bold tracking-tight text-text-primary truncate text-[15px] leading-tight">
                       {otherUser &&
                       typeof otherUser === "object" &&
                       "name" in otherUser
                         ? otherUser.name
                         : "User"}
                     </h3>
-                    <div className="text-xs text-text-muted truncate">
+                    <div className="text-xs text-text-muted truncate mt-0.5 font-medium font-mono">
                       {currentConversation.hardware_id &&
                       typeof currentConversation.hardware_id === "object" &&
                       "name" in currentConversation.hardware_id
                         ? currentConversation.hardware_id.name
                         : "Item"}{" "}
-                      (Qty: {currentConversation.quantity_requested})
+                      <span className="opacity-60">(Qty: {currentConversation.quantity_requested})</span>
                     </div>
                   </div>
                 </div>
-                {/* Status Badge */}
-                <div className="flex flex-col items-end gap-2">
+                {/* Status & Actions Container */}
+                <div className="flex items-center gap-4">
                   <span
-                    className={`text-xs sm:text-sm px-4 py-1.5 rounded-full font-semibold tracking-wide border ${
+                    className={`text-[10px] px-3 py-1.5 rounded-lg font-bold tracking-widest uppercase font-mono border ${
                       currentConversation.status === "accepted"
-                        ? "bg-accent-emerald/15 text-accent-emerald border-accent-emerald/30"
+                        ? "bg-accent-emerald/10 text-accent-emerald border-accent-emerald/20"
                         : currentConversation.status === "rejected"
-                          ? "bg-accent-rose/15 text-accent-rose border-accent-rose/30"
+                          ? "bg-accent-rose/10 text-accent-rose border-accent-rose/20"
                           : currentConversation.status === "completed"
-                            ? "bg-bg-glass text-text-muted border-border-default"
-                            : "bg-accent-amber/15 text-accent-amber border-accent-amber/30"
+                            ? "bg-bg-tertiary text-text-secondary border-border-default"
+                            : "bg-accent-amber/10 text-accent-amber border-accent-amber/20"
                     }`}
                   >
                     {String(
                       currentConversation.status ?? "pending",
-                    ).toUpperCase()}
+                    )}
                   </span>
-                  <div className="flex flex-wrap justify-end gap-2">
+                  <div className="flex items-center gap-2">
                     {isCurrentUserOwner &&
                     currentConversation.status === "pending" ? (
                       <>
@@ -645,51 +658,73 @@ const ChatPage: React.FC = () => {
 
                     {isCurrentUserParticipant &&
                     currentConversation.status === "accepted" ? (
-                      <Button
-                        type="button"
-                        size="lg"
-                        variant="secondary"
-                        onClick={() => handleStatusUpdate("completed")}
-                        isLoading={isUpdatingStatus}
-                        className="min-w-36"
-                      >
-                        Mark Completed
-                      </Button>
+                      (() => {
+                        const hasCurrentConfirmed = isCurrentUserOwner
+                          ? currentConversation.owner_completed
+                          : currentConversation.requester_completed;
+
+                        const hasPartnerConfirmed = isCurrentUserOwner
+                          ? currentConversation.requester_completed
+                          : currentConversation.owner_completed;
+
+                        if (hasCurrentConfirmed) {
+                          return (
+                            <Button
+                              type="button"
+                              size="lg"
+                              variant="secondary"
+                              disabled
+                              className="min-w-36 opacity-70 cursor-not-allowed border border-border-default bg-bg-secondary"
+                            >
+                              Waiting for partner...
+                            </Button>
+                          );
+                        }
+
+                        return (
+                          <Button
+                            type="button"
+                            size="lg"
+                            variant="secondary"
+                            onClick={() => handleStatusUpdate("completed")}
+                            isLoading={isUpdatingStatus}
+                            className="min-w-36 relative"
+                          >
+                            {hasPartnerConfirmed ? (
+                              <>
+                                <span className="absolute -top-1.5 -right-1.5 w-3.5 h-3.5 bg-accent-emerald text-white rounded-full flex items-center justify-center animate-pulse shadow-sm"></span>
+                                Confirm Completion
+                              </>
+                            ) : (
+                              "Mark Completed"
+                            )}
+                          </Button>
+                        );
+                      })()
                     ) : null}
 
                     <div className="relative" ref={chatActionsRef}>
-                      <Button
+                      <button
                         type="button"
-                        size="sm"
-                        variant="ghost"
                         onClick={() => setIsChatActionsOpen((prev) => !prev)}
-                        className="h-9 w-9 p-0 min-w-0 rounded-lg"
+                        className={`h-[30px] w-[30px] rounded border flex items-center justify-center transition-all ${isChatActionsOpen ? 'bg-bg-tertiary border-border-default/80 text-text-primary shadow-inner' : 'bg-white border-border-default/40 text-text-muted hover:text-text-primary hover:border-border-default/70 hover:shadow-sm'}`}
                         title="More chat actions"
                         disabled={isDeletingChat}
                       >
-                        <svg
-                          className="w-5 h-5"
-                          fill="currentColor"
-                          viewBox="0 0 24 24"
-                          aria-hidden="true"
-                        >
-                          <circle cx="6" cy="12" r="1.8" />
-                          <circle cx="12" cy="12" r="1.8" />
-                          <circle cx="18" cy="12" r="1.8" />
-                        </svg>
-                      </Button>
+                        <MoreHorizontal className="w-4 h-4" />
+                      </button>
 
                       {isChatActionsOpen ? (
-                        <div className="absolute right-0 mt-2 w-48 rounded-xl border border-border-default bg-bg-secondary shadow-2xl z-20 p-1.5 space-y-1">
+                        <div className="absolute right-0 mt-2 w-48 rounded-[14px] border border-border-default bg-white shadow-xl shadow-black/5 z-20 p-1.5 space-y-0.5">
                           <button
                             type="button"
                             onClick={() => {
                               setIsChatActionsOpen(false);
                               handleClearChat();
                             }}
-                            className="w-full text-left px-2.5 py-2 rounded-lg text-base text-text-primary hover:bg-bg-tertiary transition-colors"
+                            className="w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-text-primary hover:bg-bg-secondary transition-colors"
                           >
-                            Clear chat history
+                            Clear Messages
                           </button>
                           <button
                             type="button"
@@ -701,14 +736,14 @@ const ChatPage: React.FC = () => {
                               handleDeleteChat();
                             }}
                             disabled={currentConversation.status === "accepted"}
-                            className="w-full text-left px-2.5 py-2 rounded-lg text-base text-accent-rose hover:bg-bg-tertiary transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-accent-rose hover:bg-accent-rose/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             title={
                               currentConversation.status === "accepted"
                                 ? "Accepted requests cannot be deleted"
-                                : "Delete this conversation"
+                                : "Permanently delete this conversation"
                             }
                           >
-                            Delete chat
+                            Delete Chat
                           </button>
                         </div>
                       ) : null}
@@ -720,17 +755,20 @@ const ChatPage: React.FC = () => {
               {/* Messages Area */}
               <div
                 ref={messagesContainerRef}
-                className="flex-1 overflow-y-auto p-6 space-y-4"
+                className="flex-1 overflow-y-auto px-8 pt-[116px] pb-6 space-y-6 bg-bg-primary relative"
               >
+                {/* Subtle grid in background just for chat area */}
+                <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center opacity-[0.03] pointer-events-none -z-10" />
+
                 {messages.length === 0 ? (
                   <div className="flex flex-col items-center justify-center h-full text-text-muted">
-                    <p>
-                      {isChatCleared ? "Chat cleared." : "No messages yet."}
+                    <p className="font-medium text-text-secondary">
+                      {isChatCleared ? "Chat cleared." : "This is the beginning of the conversation."}
                     </p>
-                    <p className="text-sm">
+                    <p className="text-sm mt-1">
                       {isChatCleared
                         ? "Send a new message to continue this thread later."
-                        : "Send a message to start the conversation."}
+                        : "Send a message to start aligning on hardware limits."}
                     </p>
                   </div>
                 ) : (
@@ -747,15 +785,15 @@ const ChatPage: React.FC = () => {
                         className={`flex ${isMe ? "justify-end" : "justify-start"}`}
                       >
                         <div
-                          className={`max-w-[70%] rounded-2xl px-4 py-2 text-sm ${
+                          className={`max-w-[70%] px-5 py-3.5 text-[15px] leading-relaxed relative shadow-sm ${
                             isMe
-                              ? "bg-accent-indigo text-white rounded-br-sm"
-                              : "bg-bg-tertiary text-text-primary rounded-bl-sm"
+                              ? "bg-gradient-to-br from-accent-indigo to-accent-indigo/90 text-white rounded-2xl rounded-tr-sm"
+                              : "bg-white border border-border-default/50 text-text-primary rounded-2xl rounded-tl-sm shadow-[0_2px_12px_rgba(0,0,0,0.02)]"
                           }`}
                         >
                           <p className="whitespace-pre-line">{msg.message}</p>
                           <span
-                            className={`text-[10px] block mt-1 ${isMe ? "text-indigo-200" : "text-text-muted"}`}
+                            className={`text-[10px] block mt-1.5 font-medium ${isMe ? "text-indigo-100/70" : "text-text-muted/70"}`}
                           >
                             {new Date(msg.createdAt).toLocaleTimeString([], {
                               hour: "2-digit",
@@ -771,44 +809,40 @@ const ChatPage: React.FC = () => {
               </div>
 
               {/* Message Input */}
-              <form
-                onSubmit={handleSend}
-                className="p-4 border-t border-border-default bg-bg-secondary/10 shrink-0"
-              >
-                <div className="flex gap-3">
+              <div className="px-8 py-6 bg-white/70 backdrop-blur-xl shrink-0 absolute bottom-0 inset-x-0 border-t border-border-default/50 z-20">
+                <form
+                  onSubmit={handleSend}
+                  className="flex gap-3 bg-bg-primary p-2 rounded-2xl border border-border-default/60 shadow-sm focus-within:border-accent-indigo/40 focus-within:ring-2 focus-within:ring-accent-indigo/10 transition-all"
+                >
                   <input
                     type="text"
                     value={messageInput}
                     onChange={(e) => setMessageInput(e.target.value)}
                     placeholder="Type a message..."
-                    className="flex-1 bg-bg-tertiary border border-border-default rounded-xl px-4 py-3 text-text-primary focus:outline-none focus:border-accent-indigo transition-all"
+                    className="flex-1 bg-transparent px-4 py-2 text-text-primary placeholder-text-muted focus:outline-none"
                   />
                   <button
                     type="submit"
                     disabled={!messageInput.trim()}
-                    className="bg-accent-indigo hover:bg-accent-violet disabled:opacity-50 text-white rounded-xl px-6 py-3 font-medium transition-all flex items-center justify-center gap-2"
+                    className="bg-accent-indigo hover:bg-accent-violet disabled:opacity-40 disabled:hover:bg-accent-indigo text-white rounded-xl px-6 py-2.5 font-semibold transition-all flex items-center justify-center gap-2 shadow-sm"
                   >
                     Send
                   </button>
-                </div>
-              </form>
+                </form>
+              </div>
             </>
           ) : (
-            <div className="flex-1 flex items-center justify-center text-text-muted flex-col gap-4">
-              <svg
-                className="w-16 h-16 opacity-50"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={1}
-                  d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-                />
-              </svg>
-              <p>Select a conversation to start chatting</p>
+            <div className="flex-1 flex flex-col items-center justify-center bg-bg-primary relative text-center px-6">
+              <div className="absolute inset-0 bg-[#fafafa] bg-[url('/grid.svg')] bg-center opacity-[0.03] pointer-events-none -z-10" />
+              <div className="w-24 h-24 bg-white rounded-[2rem] flex items-center justify-center mb-6 shadow-sm border border-border-default/30 shadow-black/[0.04] rotate-3 hover:rotate-6 transition-transform">
+                <svg className="w-10 h-10 text-accent-indigo/40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-bold text-text-primary mb-2">Select a Conversation</h3>
+              <p className="text-text-secondary text-sm max-w-sm leading-relaxed">
+                Choose a hardware request from the sidebar to start discussing details and finalizing equipment handovers.
+              </p>
             </div>
           )}
         </div>
@@ -820,15 +854,16 @@ const ChatPage: React.FC = () => {
         title={pendingAction?.title}
         size="sm"
       >
-        <div className="space-y-5">
-          <p className="text-sm text-text-secondary leading-relaxed">
+        <div className="space-y-6">
+          <p className="text-sm font-medium text-text-secondary leading-relaxed">
             {pendingAction?.message}
           </p>
-          <div className="flex justify-end gap-3">
+          <div className="flex justify-end gap-3 pt-2">
             <Button
               type="button"
-              variant="ghost"
+              variant="secondary"
               onClick={() => setPendingAction(null)}
+              className="bg-[#fafafa]"
             >
               Cancel
             </Button>
@@ -837,13 +872,14 @@ const ChatPage: React.FC = () => {
                 type="button"
                 onClick={confirmClearChat}
                 isLoading={isDeletingChat}
+                className="bg-text-primary hover:bg-black text-white shadow-sm"
               >
                 Clear Chat
               </Button>
             ) : pendingAction?.title === "Delete disabled" ? (
               <Button
                 type="button"
-                variant="danger"
+                variant="secondary"
                 onClick={() => setPendingAction(null)}
               >
                 Close
@@ -854,9 +890,9 @@ const ChatPage: React.FC = () => {
                 variant="danger"
                 onClick={confirmDeleteChat}
                 isLoading={isDeletingChat}
-                disabled={currentConversation?.status === "accepted"}
+                className="shadow-sm"
               >
-                Delete Chat
+                Delete Permanently
               </Button>
             )}
           </div>

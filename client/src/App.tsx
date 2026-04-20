@@ -3,7 +3,7 @@ import Layout from "./components/layout/Layout";
 import LandingPage from "./pages/LandingPage";
 import UserDashboard from "./pages/UserDashboard";
 import RegistryPage from "./pages/RegistryPage";
-import SkillsProfilePage from "./pages/SkillsProfilePage";
+import AICopilotPage from "./pages/AICopilotPage";
 import EnterprisePage from "./pages/EnterprisePage";
 import ChatPage from "./pages/ChatPage";
 import SignInPage from "./pages/SignInPage";
@@ -23,7 +23,7 @@ function App() {
           <Route path="/dashboard" element={<UserDashboard />} />
           <Route path="/registry" element={<RegistryPage />} />
           <Route path="/chat" element={<ChatPage />} />
-          <Route path="/skills" element={<SkillsProfilePage />} />
+          <Route path="/copilot" element={<AICopilotPage />} />
           <Route path="/enterprise" element={<EnterprisePage />} />
           <Route path="/settings" element={<SettingsPage />} />
         </Route>

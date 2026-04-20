@@ -1,446 +1,264 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import {
-  DashboardProvider,
-  useDashboardContext,
-} from "../context/DashboardContext";
+import useStore from "../store/useStore";
+import { updateUser } from "../api/client";
+import Button from "../components/ui/Button";
+import Badge from "../components/ui/Badge";
+import Input from "../components/ui/Input";
 import {
   LayoutDashboard,
-  FolderKanban,
   Component,
   Settings,
   Sparkles,
-  Cpu,
-  Code2,
-  Users,
-  Search,
-  Loader2,
+  Search
 } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
 
-// --- SIDEBAR COMPONENT ---
-const Sidebar = () => {
-  const location = useLocation();
 
-  const navItems = [
-    { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
-    { icon: FolderKanban, label: "Projects", path: "/dashboard" },
-    { icon: Component, label: "Registry", path: "/registry" },
-    { icon: Settings, label: "Settings", path: "/settings" },
-  ];
 
-  return (
-    <aside className="hidden md:flex flex-col w-64 bg-white/50 backdrop-blur-xl border-r border-border-default p-6 z-10 sticky top-[64px] h-[calc(100vh-64px)]">
-      <div className="mb-10 mt-2">
-        <h2 className="text-xs font-bold text-text-muted uppercase tracking-wider mb-4">
-          Workspace
-        </h2>
-      </div>
-      <nav className="flex-1 space-y-1.5">
-        {navItems.map((item, i) => {
-          const isActive =
-            location.pathname === item.path ||
-            (item.path === "/dashboard" && location.pathname === "/");
+const POPULAR_SKILLS = [
+  'Python', 'JavaScript', 'TypeScript', 'React', 'Node.js',
+  'C/C++', 'Embedded Systems', 'Arduino', 'Raspberry Pi', 'ESP32',
+  'Machine Learning', 'Computer Vision', 'Natural Language Processing',
+  'PCB Design', 'Soldering', 'CAD/3D Modeling', '3D Printing',
+  'Robotics', 'IoT', 'MQTT', 'Bluetooth/BLE',
+  'Linux', 'Docker', 'Cloud (AWS/GCP)', 'API Development',
+  'Electronics', 'Signal Processing', 'Motor Control',
+  'Data Visualization', 'UI/UX Design', 'Mobile Development',
+];
 
-          return (
-            <Link
-              key={i}
-              to={item.path}
-              className={`flex items-center gap-3 w-full px-4 py-3 rounded-xl transition-all outline-none focus-visible:ring-2 focus-visible:ring-accent-indigo ${
-                isActive
-                  ? "bg-accent-indigo/10 text-accent-indigo font-semibold"
-                  : "text-text-secondary hover:text-text-primary hover:bg-bg-secondary/60"
-              }`}
-            >
-              <item.icon className="w-5 h-5" />
-              <span className="text-sm">{item.label}</span>
-            </Link>
-          );
-        })}
-      </nav>
-      <div className="mt-auto">
-        <div className="p-4 rounded-2xl bg-gradient-to-br from-bg-secondary to-white border border-border-default">
-          <p className="text-xs text-text-muted mb-3">Enterprise Plan Active</p>
-          <div className="flex items-center gap-2 text-accent-emerald text-sm font-medium">
-            <span className="w-2 h-2 rounded-full bg-accent-emerald animate-pulse" />
-            System Online
-          </div>
-        </div>
-      </div>
-    </aside>
-  );
-};
-
-// --- SKELETON LOADER ---
-const BentoSkeleton = () => (
-  <div className="animate-pulse space-y-4">
-    <div className="h-6 bg-bg-tertiary rounded-md w-1/3 mb-6" />
-    <div className="space-y-3">
-      <div className="h-10 bg-bg-secondary rounded-lg w-full" />
-      <div className="h-10 bg-bg-secondary rounded-lg w-full" />
-      <div className="h-10 bg-bg-secondary rounded-lg w-3/4" />
-    </div>
-  </div>
-);
+const badgeVariants = ['indigo', 'violet', 'cyan', 'emerald', 'amber', 'rose'] as const;
 
 // --- MAIN DASHBOARD CONTENT ---
 const DashboardContent = () => {
-  const {
-    projectPrompt,
-    setProjectPrompt,
-    isLoading,
-    hasLoaded,
-    aiResult,
-    matchedHardware,
-    matchedMentors,
-    projectAdvice,
-    submitPrompt,
-  } = useDashboardContext();
+  const user = useStore((state) => state.user);
+  const { userSkills, setUserSkills } = useStore();
+  const [selectedSkills, setSelectedSkills] = useState<string[]>(userSkills);
+  const [customSkill, setCustomSkill] = useState('');
+  const [bio, setBio] = useState('');
+  const [searchFilter, setSearchFilter] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
-      submitPrompt();
+  const filteredSkills = POPULAR_SKILLS.filter(
+    (skill) =>
+      skill.toLowerCase().includes(searchFilter.toLowerCase()) &&
+      !selectedSkills.includes(skill)
+  );
+
+  const toggleSkill = (skill: string) => {
+    if (selectedSkills.includes(skill)) {
+      setSelectedSkills(selectedSkills.filter((s) => s !== skill));
+    } else {
+      setSelectedSkills([...selectedSkills, skill]);
+    }
+    setSaved(false);
+  };
+
+  const addCustomSkill = () => {
+    const skill = customSkill.trim();
+    if (skill && !selectedSkills.includes(skill)) {
+      setSelectedSkills([...selectedSkills, skill]);
+      setCustomSkill('');
+      setSaved(false);
     }
   };
 
-  return (
-    <main className="flex-1 bg-bg-primary bg-grid-texture p-4 md:p-8 overflow-y-auto">
-      <div className="max-w-6xl mx-auto space-y-8">
-        {/* Top Center AI Input */}
-        <div className="relative max-w-2xl mx-auto mb-12">
-          <div className="flex flex-col gap-2">
-            <h1 className="text-3xl font-bold text-text-primary text-center mb-2">
-              Build your next masterpiece.
-            </h1>
-            <p className="text-text-muted text-center mb-6">
-              Describe your hardware project, and OMNIPOOL will find the pieces.
-            </p>
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      await updateUser('self', { skills: selectedSkills, bio });
+    } catch {
+      // Expected in dev mode without auth
+    }
+    setUserSkills(selectedSkills);
+    setSaved(true);
+    setIsSaving(false);
+    setTimeout(() => setSaved(false), 3000);
+  };
 
-            <div className="relative group">
-              <div className="absolute inset-0 bg-accent-indigo/10 blur-2xl group-focus-within:bg-accent-indigo/20 transition-all rounded-[2rem]" />
-              <div className="relative flex items-center bg-white border-2 border-border-default hover:border-accent-indigo/30 focus-within:border-accent-indigo p-2 rounded-[2rem] shadow-xl transition-all">
-                <Search className="w-6 h-6 text-text-muted ml-4" />
-                <input
-                  type="text"
-                  placeholder="e.g. A weather station with OLED and ESP32..."
-                  className="flex-1 bg-transparent px-4 py-3 outline-none text-text-primary"
-                  value={projectPrompt}
-                  onChange={(e) => setProjectPrompt(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                />
-                <button
-                  onClick={submitPrompt}
-                  disabled={isLoading}
-                  className="bg-accent-indigo text-white px-6 py-3 rounded-full font-bold hover:bg-accent-indigo-dark transition-all disabled:opacity-50 flex items-center gap-2"
-                >
-                  {isLoading ? (
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                  ) : (
-                    <Sparkles className="w-5 h-5" />
-                  )}
-                  Generate
-                </button>
+  return (
+    <main className="flex-1 overflow-y-auto bg-bg-primary pt-10 pb-20 relative">
+      <div className="absolute top-0 inset-x-0 h-[400px] bg-gradient-to-b from-black/[0.03] to-transparent pointer-events-none" />
+
+      {/* Header Banner */}
+      <div className="max-w-6xl mx-auto px-6 lg:px-8 mb-16 relative">
+        <div className="flex items-center gap-6">
+          <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-accent-indigo to-accent-violet flex items-center justify-center text-white text-3xl font-bold shadow-lg shadow-accent-indigo/20">
+            {user?.name ? user.name.charAt(0).toUpperCase() : "U"}
+          </div>
+          <div>
+            <h1 className="text-4xl font-bold tracking-tight text-text-primary mb-2">
+              Welcome back, {user?.name?.split(' ')[0] || "User"}
+            </h1>
+            <p className="text-text-secondary text-lg">
+              Manage your personal settings, skills, and platform preferences.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-6xl mx-auto px-6 lg:px-8 space-y-16">
+        
+        {/* Section: Account Profile */}
+        <section className="grid grid-cols-1 md:grid-cols-12 gap-8 md:gap-16">
+          <div className="md:col-span-4">
+            <h2 className="text-lg font-bold text-text-primary flex items-center gap-2">
+              <Settings className="w-5 h-5 text-accent-indigo" />
+              Account Details
+            </h2>
+            <p className="text-sm text-text-secondary mt-2">
+              Your core personal information and account standing.
+            </p>
+          </div>
+          <div className="md:col-span-8 grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="bg-bg-secondary border border-border-default rounded-2xl p-6 shadow-sm hover:border-accent-indigo/30 transition-colors">
+              <p className="text-xs uppercase tracking-widest text-text-muted font-bold mb-1">Name</p>
+              <p className="text-text-primary text-base font-semibold">{user?.name || "Unknown"}</p>
+            </div>
+            <div className="bg-bg-secondary border border-border-default rounded-2xl p-6 shadow-sm hover:border-accent-indigo/30 transition-colors">
+              <p className="text-xs uppercase tracking-widest text-text-muted font-bold mb-1">Email Base</p>
+              <p className="text-text-primary text-base font-semibold truncate">{user?.email || "Unknown"}</p>
+            </div>
+            <div className="bg-bg-secondary border border-border-default rounded-2xl p-6 shadow-sm hover:border-accent-indigo/30 transition-colors flex flex-col justify-between">
+              <p className="text-xs uppercase tracking-widest text-text-muted font-bold mb-1">Account Tier</p>
+              <p className="text-text-primary text-base font-semibold capitalize flex items-center gap-2">
+                {user?.account_type || "community"}
+                {user?.account_type === "enterprise" && <Sparkles className="w-4 h-4 text-accent-emerald" />}
+              </p>
+            </div>
+            <div className="bg-bg-secondary border border-border-default rounded-2xl p-6 shadow-sm transition-colors relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-accent-indigo/10 to-transparent rounded-full -mr-12 -mt-12" />
+              <p className="text-xs uppercase tracking-widest text-text-muted font-bold mb-1 relative z-10">Enterprise Status</p>
+              <p className={`text-base font-semibold capitalize relative z-10 ${user?.enterprise_status === "accepted" ? "text-accent-emerald" : "text-text-primary"}`}>
+                {user?.enterprise_status || "Standard"}
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <hr className="border-border-default" />
+
+        {/* Section: Expertise */}
+        <section className="grid grid-cols-1 md:grid-cols-12 gap-8 md:gap-16">
+          <div className="md:col-span-4">
+            <h2 className="text-lg font-bold text-text-primary flex items-center gap-2">
+              <Component className="w-5 h-5 text-accent-indigo" />
+              Expertise & Skills
+            </h2>
+            <p className="text-sm text-text-secondary mt-2">
+              Add specific hardware and software skills to get matched accurately with people who need your help.
+            </p>
+          </div>
+          
+          <div className="md:col-span-8 bg-bg-secondary border border-border-default rounded-3xl p-6 md:p-8 shadow-sm">
+            <h3 className="text-sm font-bold text-text-primary mb-4 flex justify-between items-center">
+              Active Skills
+              <span className="text-xs font-medium bg-bg-tertiary px-2.5 py-1 rounded-full text-text-secondary">{selectedSkills.length} selected</span>
+            </h3>
+            
+            <div className="mb-8 min-h-[60px]">
+              {selectedSkills.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {selectedSkills.map((skill, index) => (
+                    <button key={skill} onClick={() => toggleSkill(skill)} className="cursor-pointer group">
+                      <Badge variant={badgeVariants[index % badgeVariants.length]} size="md">
+                        {skill}
+                        <span className="ml-1.5 opacity-40 group-hover:opacity-100 transition-opacity">×</span>
+                      </Badge>
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <div className="h-full flex items-center justify-center border border-dashed border-border-default rounded-xl bg-bg-primary/50 text-sm text-text-muted py-6">
+                  No skills selected yet. Add some below!
+                </div>
+              )}
+            </div>
+
+            <div className="border-t border-border-default pt-6">
+              <h4 className="text-xs uppercase tracking-widest text-text-muted font-bold mb-4">Discover Skills</h4>
+              <Input
+                placeholder="Search catalog..."
+                value={searchFilter}
+                onChange={(e) => setSearchFilter(e.target.value)}
+                className="mb-4 bg-bg-primary"
+                icon={<Search className="w-4 h-4 text-text-muted" />}
+              />
+
+              <div className="flex flex-wrap gap-2 mb-6 max-h-40 overflow-y-auto">
+                {filteredSkills.slice(0, 15).map((skill) => (
+                  <button
+                    key={skill}
+                    onClick={() => toggleSkill(skill)}
+                    className="px-3 py-1.5 rounded-lg text-sm font-medium border border-border-default bg-bg-primary text-text-secondary hover:border-accent-indigo/40 hover:text-accent-indigo hover:bg-accent-indigo/5 transition-all duration-200 cursor-pointer"
+                  >
+                    + {skill}
+                  </button>
+                ))}
               </div>
-              <div className="flex justify-center mt-4 gap-6 text-[11px] text-text-muted uppercase tracking-widest font-bold">
-                <span className="flex items-center gap-1.5">
-                  <Cpu className="w-3 h-3" /> Hardware RAG
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <Users className="w-3 h-3" /> Mentor Match
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <Code2 className="w-3 h-3" /> Skill Analysis
-                </span>
+
+              <div className="flex gap-3 mt-4 pt-6 border-t border-border-default">
+                <Input
+                  className="bg-bg-primary"
+                  placeholder="Type custom skill & press enter..."
+                  value={customSkill}
+                  onChange={(e) => setCustomSkill(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addCustomSkill())}
+                />
+                <Button variant="secondary" onClick={addCustomSkill} disabled={!customSkill.trim()}>Add</Button>
               </div>
             </div>
           </div>
+        </section>
+
+        <hr className="border-border-default" />
+
+        {/* Section: Biography */}
+        <section className="grid grid-cols-1 md:grid-cols-12 gap-8 md:gap-16">
+          <div className="md:col-span-4">
+            <h2 className="text-lg font-bold text-text-primary flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-accent-indigo" />
+              Public Biography
+            </h2>
+            <p className="text-sm text-text-secondary mt-2">
+              Tell the community about your past projects, specializations, and what drives you.
+            </p>
+          </div>
+          <div className="md:col-span-8 bg-bg-secondary border border-border-default rounded-3xl p-6 md:p-8 shadow-sm">
+            <textarea
+              placeholder="I'm a hardware engineer currently working on open source robotics..."
+              value={bio}
+              onChange={(e) => setBio(e.target.value)}
+              className="w-full min-h-[140px] bg-bg-primary border border-border-default rounded-xl px-5 py-4 text-text-primary placeholder-text-muted text-base focus:outline-none focus:border-accent-indigo focus:ring-2 focus:ring-accent-indigo/20 transition-all duration-200 resize-y"
+              maxLength={500}
+            />
+            <div className="flex justify-end mt-2">
+              <span className="text-xs font-medium text-text-muted">{bio.length} / 500 characters</span>
+            </div>
+          </div>
+        </section>
+
+        {/* Save Actions */}
+        <div className="flex items-center justify-end gap-6 pt-8 pb-10">
+          {saved && <span className="text-sm font-semibold text-accent-emerald animate-pulse flex items-center gap-2">
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+            Successfully Updated!
+          </span>}
+          <Button variant="primary" size="lg" isLoading={isSaving} onClick={handleSave} className="min-w-48 shadow-lg shadow-accent-indigo/20">
+            Save Modifications
+          </Button>
         </div>
 
-        {/* Bento Grid layout */}
-        {(isLoading || hasLoaded) && (
-          <div className="space-y-6">
-            {/* RAG GROUNDED ADVICE - FULL WIDTH */}
-            <AnimatePresence>
-              {(projectAdvice || isLoading) && (
-                <motion.article
-                  initial={{ opacity: 0, scale: 0.98 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  className="bg-gradient-to-br from-accent-indigo/90 to-accent-violet/90 text-white p-8 rounded-[2rem] shadow-2xl relative overflow-hidden border border-white/20"
-                >
-                  <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none">
-                    <Sparkles className="w-32 h-32 rotate-12" />
-                  </div>
-
-                  <div className="flex flex-col md:flex-row gap-8 relative z-10">
-                    <div className="flex-1">
-                      <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 backdrop-blur-md text-xs font-bold uppercase tracking-widest mb-4">
-                        <Sparkles className="w-3 h-3" /> Project AI Advisor
-                      </div>
-                      <h3 className="text-2xl font-bold mb-4">
-                        {aiResult?.title || "Personalized Strategy"}
-                      </h3>
-                      {isLoading ? (
-                        <div className="space-y-3">
-                          <div className="h-4 bg-white/20 rounded w-full animate-pulse" />
-                          <div className="h-4 bg-white/20 rounded w-4/5 animate-pulse" />
-                          <div className="h-4 bg-white/20 rounded w-3/4 animate-pulse" />
-                        </div>
-                      ) : (
-                        <p className="text-white/90 leading-relaxed max-w-2xl">
-                          {projectAdvice?.strategy}
-                        </p>
-                      )}
-                    </div>
-
-                    <div className="flex flex-col sm:flex-row md:flex-col gap-4 min-w-[200px]">
-                      <div className="bg-white/10 backdrop-blur-md border border-white/20 p-4 rounded-2xl">
-                        <p className="text-white/60 text-xs uppercase font-bold mb-1">
-                          Feasibility
-                        </p>
-                        <div className="flex items-center gap-3">
-                          <div className="h-2 flex-1 bg-white/20 rounded-full overflow-hidden">
-                            <motion.div
-                              initial={{ width: 0 }}
-                              animate={{
-                                width: `${projectAdvice?.feasibility_score || 0}%`,
-                              }}
-                              className="h-full bg-accent-emerald shadow-[0_0_10px_rgba(16,185,129,0.5)]"
-                            />
-                          </div>
-                          <span className="text-sm font-bold">
-                            {projectAdvice?.feasibility_score}%
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="bg-white/10 backdrop-blur-md border border-white/20 p-4 rounded-2xl">
-                        <p className="text-white/60 text-xs uppercase font-bold mb-1">
-                          Difficulty
-                        </p>
-                        <span className="text-lg font-bold">
-                          {projectAdvice?.difficulty}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {!isLoading && projectAdvice?.next_steps && (
-                    <div className="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-4">
-                      {projectAdvice.next_steps.map((step, i) => (
-                        <div
-                          key={i}
-                          className="bg-white/5 hover:bg-white/10 transition-colors p-4 rounded-xl border border-white/10 flex gap-3 items-center"
-                        >
-                          <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center text-xs font-bold">
-                            {i + 1}
-                          </div>
-                          <span className="text-sm">{step}</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </motion.article>
-              )}
-            </AnimatePresence>
-
-            <section
-              className="grid grid-cols-1 md:grid-cols-2 gap-6"
-              aria-live="polite"
-              aria-atomic="true"
-              aria-busy={isLoading}
-            >
-              <AnimatePresence mode="popLayout">
-                {/* 1. Bill of Materials */}
-                <motion.article
-                  key="bom-card"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="glass-card p-6 rounded-[1.5rem] relative overflow-hidden focus-within:ring-2 focus-within:ring-accent-indigo"
-                  tabIndex={0}
-                >
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="p-2.5 bg-accent-indigo/10 rounded-xl text-accent-indigo">
-                      <Cpu className="w-5 h-5" />
-                    </div>
-                    <h3 className="text-lg font-bold text-text-primary">
-                      Bill of Materials
-                    </h3>
-                  </div>
-                  {isLoading ? (
-                    <BentoSkeleton />
-                  ) : (
-                    <ul className="space-y-3">
-                      {aiResult?.extrapolated_BOM?.map((item, idx) => (
-                        <li
-                          key={idx}
-                          className="flex justify-between items-center bg-bg-secondary/60 p-3.5 rounded-xl border border-border-default/50"
-                        >
-                          <span className="text-sm font-medium text-text-primary">
-                            {item.hardware_name}
-                          </span>
-                          <span className="text-xs font-mono font-bold bg-accent-indigo/10 text-accent-indigo px-2.5 py-1 rounded-lg">
-                            x{item.quantity}
-                          </span>
-                        </li>
-                      ))}
-                      {!aiResult?.extrapolated_BOM?.length && (
-                        <p className="text-text-muted text-sm">
-                          No hardware detected.
-                        </p>
-                      )}
-                    </ul>
-                  )}
-                </motion.article>
-
-                {/* 2. Required Technical Skills */}
-                <motion.article
-                  key="skills-card"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.1 }}
-                  className="glass-card p-6 rounded-[1.5rem] relative overflow-hidden focus-within:ring-2 focus-within:ring-accent-cyan"
-                  tabIndex={0}
-                >
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="p-2.5 bg-accent-cyan/10 rounded-xl text-accent-cyan">
-                      <Code2 className="w-5 h-5" />
-                    </div>
-                    <h3 className="text-lg font-bold text-text-primary">
-                      Required Skills
-                    </h3>
-                  </div>
-                  {isLoading ? (
-                    <BentoSkeleton />
-                  ) : (
-                    <div className="flex flex-wrap gap-2">
-                      {aiResult?.required_skills?.map((skill, idx) => (
-                        <span
-                          key={idx}
-                          className="text-xs font-medium bg-bg-secondary border border-border-default text-text-secondary px-3 py-1.5 rounded-full"
-                        >
-                          {skill}
-                        </span>
-                      ))}
-                      {!aiResult?.required_skills?.length && (
-                        <p className="text-text-muted text-sm">
-                          No specific skills parsed.
-                        </p>
-                      )}
-                    </div>
-                  )}
-                </motion.article>
-
-                {/* 3. Matched Local Hardware */}
-                <motion.article
-                  key="hardware-card"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.2 }}
-                  className="glass-card p-6 rounded-[1.5rem] relative overflow-hidden focus-within:ring-2 focus-within:ring-accent-emerald"
-                  tabIndex={0}
-                >
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="p-2.5 bg-accent-emerald/10 rounded-xl text-accent-emerald">
-                      <Search className="w-5 h-5" />
-                    </div>
-                    <h3 className="text-lg font-bold text-text-primary">
-                      Local Hardware Matches
-                    </h3>
-                  </div>
-                  {isLoading ? (
-                    <BentoSkeleton />
-                  ) : (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      {matchedHardware?.length > 0 ? (
-                        matchedHardware.map((hw, idx) => (
-                          <div
-                            key={idx}
-                            className="bg-bg-secondary/60 p-3.5 rounded-xl border border-border-default/50 flex flex-col"
-                          >
-                            <span className="text-sm font-medium text-text-primary truncate">
-                              {hw.name}
-                            </span>
-                            <span className="text-xs text-accent-emerald mt-1">
-                              {hw.status}
-                            </span>
-                          </div>
-                        ))
-                      ) : (
-                        <p className="text-text-muted text-sm col-span-2">
-                          No local community hardware available for these parts
-                          yet.
-                        </p>
-                      )}
-                    </div>
-                  )}
-                </motion.article>
-
-                {/* 4. Matched Mentors */}
-                <motion.article
-                  key="mentors-card"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.3 }}
-                  className="glass-card p-6 rounded-[1.5rem] relative overflow-hidden focus-within:ring-2 focus-within:ring-accent-rose"
-                  tabIndex={0}
-                >
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="p-2.5 bg-accent-rose/10 rounded-xl text-accent-rose">
-                      <Users className="w-5 h-5" />
-                    </div>
-                    <h3 className="text-lg font-bold text-text-primary">
-                      Expert Mentors
-                    </h3>
-                  </div>
-                  {isLoading ? (
-                    <BentoSkeleton />
-                  ) : (
-                    <ul className="space-y-3">
-                      {matchedMentors?.length > 0 ? (
-                        matchedMentors.map((mentor, idx) => (
-                          <li
-                            key={idx}
-                            className="flex items-center gap-3 bg-bg-secondary/60 p-3.5 rounded-xl border border-border-default/50"
-                          >
-                            <div className="w-9 h-9 rounded-full bg-accent-indigo/10 flex items-center justify-center text-xs font-bold text-accent-indigo">
-                              {mentor.name.charAt(0)}
-                            </div>
-                            <div className="flex flex-col">
-                              <span className="text-sm font-medium text-text-primary">
-                                {mentor.name}
-                              </span>
-                              <span className="text-xs text-text-muted truncate">
-                                {mentor.skills?.slice(0, 2).join(", ")}
-                              </span>
-                            </div>
-                          </li>
-                        ))
-                      ) : (
-                        <p className="text-text-muted text-sm">
-                          No matched mentors nearby.
-                        </p>
-                      )}
-                    </ul>
-                  )}
-                </motion.article>
-              </AnimatePresence>
-            </section>
-          </div>
-        )}
       </div>
     </main>
   );
 };
 
-// --- ROOT PAGE COMPONENT ---
 const UserDashboard: React.FC = () => {
   return (
-    <DashboardProvider>
-      <div className="flex min-h-[calc(100vh-64px)] bg-bg-primary font-sans">
-        <Sidebar />
-        <DashboardContent />
-      </div>
-    </DashboardProvider>
+    <div className="flex flex-col min-h-screen bg-bg-primary font-sans pt-16">
+      <DashboardContent />
+    </div>
   );
 };
 
