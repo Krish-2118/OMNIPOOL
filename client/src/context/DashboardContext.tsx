@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
-import { parseProject, matchResources, getAdvice } from '../api/client';
+import React, { createContext, useContext, useState } from "react";
+import type { ReactNode } from "react";
+import { parseProject, matchResources, getAdvice } from "../api/client";
 
 export interface BOMItem {
   hardware_name: string;
@@ -48,18 +49,22 @@ interface DashboardState {
 
 const DashboardContext = createContext<DashboardState | undefined>(undefined);
 
-export const DashboardProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [projectPrompt, setProjectPrompt] = useState<string>('');
+export const DashboardProvider: React.FC<{ children: ReactNode }> = ({
+  children,
+}) => {
+  const [projectPrompt, setProjectPrompt] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [hasLoaded, setHasLoaded] = useState<boolean>(false);
   const [aiResult, setAiResult] = useState<AIResult | null>(null);
   const [matchedHardware, setMatchedHardware] = useState<HardwareItem[]>([]);
   const [matchedMentors, setMatchedMentors] = useState<Mentor[]>([]);
-  const [projectAdvice, setProjectAdvice] = useState<ProjectAdvice | null>(null);
+  const [projectAdvice, setProjectAdvice] = useState<ProjectAdvice | null>(
+    null,
+  );
 
   const submitPrompt = async () => {
     if (!projectPrompt.trim()) return;
-    
+
     setIsLoading(true);
     setHasLoaded(false);
     setAiResult(null);
@@ -77,33 +82,46 @@ export const DashboardProvider: React.FC<{ children: ReactNode }> = ({ children 
       let localHardware: HardwareItem[] = [];
       let localMentors: Mentor[] = [];
 
-      if (result.extrapolated_BOM?.length > 0 || result.required_skills?.length > 0) {
-        const matchResponse = await matchResources(result.extrapolated_BOM, result.required_skills);
+      if (
+        result.extrapolated_BOM?.length > 0 ||
+        result.required_skills?.length > 0
+      ) {
+        const matchResponse = await matchResources(
+          result.extrapolated_BOM,
+          result.required_skills,
+        );
         localHardware = matchResponse.data.data.matched_hardware || [];
         localMentors = matchResponse.data.data.matched_mentors || [];
-        
+
         setMatchedHardware(localHardware);
         setMatchedMentors(localMentors);
       }
 
       // 3. Get Project Advice (RAG Layer)
-      const adviceResponse = await getAdvice(projectPrompt, localHardware, localMentors);
+      const adviceResponse = await getAdvice(
+        projectPrompt,
+        localHardware,
+        localMentors,
+      );
       setProjectAdvice(adviceResponse.data.data);
 
       setHasLoaded(true);
     } catch (error) {
-      console.error('Error processing project prompt:', error);
+      console.error("Error processing project prompt:", error);
       setAiResult({
         title: "Analysis Failed",
-        description: "We couldn't process your request. Please check your connectivity or API key.",
+        description:
+          "We couldn't process your request. Please check your connectivity or API key.",
         extrapolated_BOM: [],
-        required_skills: []
+        required_skills: [],
       });
       setProjectAdvice({
-        strategy: "Error: " + (error as any).message || "Something went wrong during generation.",
+        strategy:
+          "Error: " + (error as any).message ||
+          "Something went wrong during generation.",
         difficulty: "Unknown",
         feasibility_score: 0,
-        next_steps: ["Try again in a few moments", "Check your .env settings"]
+        next_steps: ["Try again in a few moments", "Check your .env settings"],
       });
       setHasLoaded(true);
     } finally {
@@ -122,7 +140,7 @@ export const DashboardProvider: React.FC<{ children: ReactNode }> = ({ children 
         matchedHardware,
         matchedMentors,
         projectAdvice,
-        submitPrompt
+        submitPrompt,
       }}
     >
       {children}
@@ -133,7 +151,9 @@ export const DashboardProvider: React.FC<{ children: ReactNode }> = ({ children 
 export const useDashboardContext = () => {
   const context = useContext(DashboardContext);
   if (context === undefined) {
-    throw new Error('useDashboardContext must be used within a DashboardProvider');
+    throw new Error(
+      "useDashboardContext must be used within a DashboardProvider",
+    );
   }
   return context;
 };

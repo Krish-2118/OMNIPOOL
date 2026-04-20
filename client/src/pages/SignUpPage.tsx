@@ -1,24 +1,16 @@
-import React, { useEffect, useState } from "react";
-import { Link, Navigate } from "react-router-dom";
+import React, { useState } from "react";
+import { Link, Navigate, useNavigate } from "react-router-dom";
 import { ArrowLeft, Eye, EyeOff } from "lucide-react";
-import {
-  createUserWithEmailAndPassword,
-  signInWithPopup,
-  updateProfile,
-} from "firebase/auth";
-
+import { signInWithPopup } from "firebase/auth";
 import { auth, googleProvider } from "../config/firebase";
 import useStore from "../store/useStore";
-import { useAuth } from "../context/AuthContext";
-import {
-  getAuthErrorCode,
-  getGoogleSignInMessage,
-  getSignUpMessage,
-} from "../utils/authErrors";
+import { registerUser, googleLoginUser } from "../api/client";
 
 const SignUpPage: React.FC = () => {
+  const navigate = useNavigate();
   const user = useStore((state) => state.user);
-  const { isAuthLoading } = useAuth();
+  const setUser = useStore((state) => state.setUser);
+  
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -26,34 +18,25 @@ const SignUpPage: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  useEffect(() => {
-    const syncError = sessionStorage.getItem("auth_sync_error");
-    if (syncError) {
-      setError(syncError);
-      sessionStorage.removeItem("auth_sync_error");
-    }
-  }, []);
-
-  if (!isAuthLoading && user) {
+  if (user) {
     return <Navigate to="/dashboard" replace />;
   }
 
   const handleEmailSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-
     setIsSubmitting(true);
+    
     try {
-      const credential = await createUserWithEmailAndPassword(
-        auth,
-        email.trim(),
+      const { data } = await registerUser({
+        name: name.trim(),
+        email: email.trim(),
         password,
-      );
-      if (name.trim()) {
-        await updateProfile(credential.user, { displayName: name.trim() });
-      }
-    } catch (error) {
-      setError(getSignUpMessage(getAuthErrorCode(error)));
+      });
+      setUser(data.data);
+      navigate("/dashboard", { replace: true });
+    } catch (err: any) {
+      setError(err.response?.data?.error || "An error occurred during registration");
     } finally {
       setIsSubmitting(false);
     }
@@ -63,9 +46,20 @@ const SignUpPage: React.FC = () => {
     setError("");
     setIsSubmitting(true);
     try {
-      await signInWithPopup(auth, googleProvider);
-    } catch (error) {
-      setError(getGoogleSignInMessage(getAuthErrorCode(error)));
+      const result = await signInWithPopup(auth, googleProvider);
+      const user = result.user;
+      
+      const { data } = await googleLoginUser({ 
+        email: user.email || "", 
+        name: user.displayName || user.email?.split("@")[0] || "User", 
+        avatar_url: user.photoURL || "" 
+      });
+      
+      setUser(data.data);
+      navigate("/dashboard", { replace: true });
+    } catch (err: any) {
+      console.error(err);
+      setError("Failed to sign up with Google.");
     } finally {
       setIsSubmitting(false);
     }
@@ -85,15 +79,16 @@ const SignUpPage: React.FC = () => {
           Create your OmniPool account
         </h1>
         <p className="text-sm text-text-muted mb-6">
-          Authentication is powered by Firebase.
+          Connect, pool hardware, and join the community.
         </p>
 
         <button
           type="button"
           onClick={handleGoogleSignUp}
           disabled={isSubmitting}
-          className="w-full mb-4 px-4 py-2.5 border border-border-default rounded-xl text-sm font-medium text-text-primary hover:bg-bg-secondary transition-all disabled:opacity-70"
+          className="w-full mb-4 px-4 py-2.5 border border-border-default rounded-xl text-sm font-medium text-text-primary hover:bg-bg-secondary transition-all disabled:opacity-70 flex items-center justify-center gap-2"
         >
+          <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" className="w-4 h-4" />
           Continue with Google
         </button>
 
@@ -112,6 +107,7 @@ const SignUpPage: React.FC = () => {
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="Full name"
+            required
             className="w-full bg-bg-tertiary border border-border-default rounded-xl px-4 py-2.5 text-text-primary"
           />
           <input
@@ -141,13 +137,20 @@ const SignUpPage: React.FC = () => {
               {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
           </div>
+          
           {error && <p className="text-sm text-accent-rose">{error}</p>}
+          
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full px-4 py-2.5 rounded-xl bg-accent-indigo text-white font-medium hover:bg-accent-violet transition-all disabled:opacity-70"
+            className="w-full px-4 py-2.5 rounded-xl bg-accent-indigo text-white font-medium hover:bg-accent-violet transition-all disabled:opacity-70 flex justify-center items-center"
           >
-            Sign Up
+            {isSubmitting ? (
+              <svg className="animate-spin h-5 w-5 text-white" viewBox="0 0 24 24" fill="none">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+              </svg>
+            ) : "Sign Up"}
           </button>
         </form>
 

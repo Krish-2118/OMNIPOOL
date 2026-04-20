@@ -11,11 +11,6 @@ const auth = async (req, res, next) => {
     const authHeader = req.headers.authorization;
 
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      // In development, attach a placeholder user ID for testing
-      if (process.env.NODE_ENV === 'development') {
-        req.userId = null; // No authenticated user
-        return next();
-      }
       return res.status(401).json({ success: false, error: 'No token provided' });
     }
 

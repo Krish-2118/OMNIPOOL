@@ -7,10 +7,19 @@ const { isGeminiConfigured } = require('../config/gemini');
  */
 const generateEmbedding = async (text) => {
   try {
-    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-    const model = genAI.getGenerativeModel({ model: 'gemini-embedding-001' });
+    if (!process.env.GEMINI_API_KEY) {
+      console.warn('GEMINI_API_KEY is missing. Skipping embedding generation.');
+      return new Array(768).fill(0);
+    }
 
-    const result = await model.embedContent(text);
+    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+    const model = genAI.getGenerativeModel({ model: 'text-embedding-004' });
+
+    // Set a 5-second timeout for the embedding API call
+    const resultPromise = model.embedContent(text);
+    const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Embedding timeout')), 5000));
+    
+    const result = await Promise.race([resultPromise, timeoutPromise]);
     return result.embedding.values;
   } catch (error) {
     console.error('Embedding generation error:', error.message);
