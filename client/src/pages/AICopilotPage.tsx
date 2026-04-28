@@ -1,24 +1,10 @@
 import React from "react";
-import { Link, useLocation } from "react-router-dom";
 import {
   DashboardProvider,
   useDashboardContext,
 } from "../context/DashboardContext";
-import {
-  LayoutDashboard,
-  FolderKanban,
-  Component,
-  Settings,
-  Sparkles,
-  Cpu,
-  Code2,
-  Users,
-  Search,
-  Loader2,
-} from "lucide-react";
+import { Sparkles, Cpu, Code2, Users, Search, Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-
-
 
 // --- SKELETON LOADER ---
 const BentoSkeleton = () => (
