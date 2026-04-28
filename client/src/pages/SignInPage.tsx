@@ -21,6 +21,19 @@ const SignInPage: React.FC = () => {
   const from =
     (location.state as { from?: string } | null)?.from || "/dashboard";
 
+  const extractErrorMessage = (err: any) => {
+    const be = err?.response?.data?.error;
+    if (typeof be === "string") return be;
+    if (be?.message) return be.message;
+    if (err?.code) return err.code;
+    if (err?.message) return err.message;
+    try {
+      return JSON.stringify(be || err);
+    } catch {
+      return "An unexpected error occurred";
+    }
+  };
+
   if (user) {
     return <Navigate to={from} replace />;
   }
@@ -35,7 +48,7 @@ const SignInPage: React.FC = () => {
       navigate(from, { replace: true });
     } catch (err: any) {
       setError(
-        err.response?.data?.error ||
+        extractErrorMessage(err) ||
           "Failed to sign in. Please check your credentials.",
       );
     } finally {
@@ -60,7 +73,7 @@ const SignInPage: React.FC = () => {
       navigate(from, { replace: true });
     } catch (err: any) {
       console.error(err);
-      setError("Failed to sign in with Google.");
+      setError(extractErrorMessage(err) || "Failed to sign in with Google.");
     } finally {
       setIsSubmitting(false);
     }
